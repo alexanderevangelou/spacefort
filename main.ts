@@ -37,6 +37,74 @@ namespace StatusBarKind {
     export const Bigenemyhealth = StatusBarKind.create()
     export const bigenemyhealth2 = StatusBarKind.create()
 }
+sprites.onOverlap(SpriteKind.Player, SpriteKind.Enemy, function (sprite, otherSprite) {
+    if (Shileded && Shileded.lifespan > 0) {
+        bigenemydeath(otherSprite)
+    } else {
+        music.bigCrash.play()
+        info.changeLifeBy(-1)
+        bigenemydeath(otherSprite)
+        sprite.destroy()
+        scene.cameraShake(4, 500)
+        if (Doublefire && Doublefire.lifespan > 0) {
+            Doublefire.lifespan = 0
+        }
+        if (tripplefire && tripplefire.lifespan > 0) {
+            tripplefire.lifespan = 0
+        }
+    }
+})
+statusbars.onZero(StatusBarKind.bigenemyhealth2, function (status) {
+    callbigenemy2death(status.spriteAttachedTo())
+})
+sprites.onOverlap(SpriteKind.Player, SpriteKind.Powerup2, function (sprite, otherSprite) {
+    if (tripplefire && tripplefire.lifespan == 0) {
+        music.powerUp.play()
+        otherSprite.destroy()
+        powerup2.lifespan = 0
+        info.changeScoreBy(1000)
+        powerupactivate = false
+    } else {
+        music.powerUp.play()
+        otherSprite.destroy()
+        tripplefire = sprites.create(img`
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . 6 . . . . . 
+            . . . . . . . . . 6 6 6 . . . . 
+            . . . . . . . . . 6 6 6 . . . . 
+            . . . . . . . . . 6 6 6 . . . . 
+            . . . . . . . . . 6 . 6 . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            `, SpriteKind.mode2)
+        tripplefire.setPosition(149, 108)
+        tripplefire.lifespan = 9999999
+        info.changeScoreBy(1000)
+        powerup2activate = false
+    }
+})
+sprites.onOverlap(SpriteKind.Projectile, SpriteKind.Boss2, function (sprite, otherSprite) {
+    music.zapped.play()
+    sprite.destroy(effects.warmRadial, 100)
+    statusbars.getStatusBarAttachedTo(StatusBarKind.boss2health, otherSprite).value += -0.4
+    if (Doublefire && Doublefire.lifespan > 0) {
+        statusbars.getStatusBarAttachedTo(StatusBarKind.boss2health, otherSprite).value += 0.1
+    }
+    if (tripplefire && tripplefire.lifespan > 0) {
+        statusbars.getStatusBarAttachedTo(StatusBarKind.boss2health, otherSprite).value += 0.07
+    }
+})
+statusbars.onZero(StatusBarKind.Bigenemyhealth, function (status) {
+    bigenemydeath(status.spriteAttachedTo())
+})
 function instructions () {
     scene.setBackgroundImage(img`
         ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
@@ -547,15 +615,25 @@ function instructions () {
     characterAnimations.rule(Predicate.NotMoving)
     )
 }
-sprites.onOverlap(SpriteKind.Bossshot, SpriteKind.Player, function (sprite, otherSprite) {
+sprites.onOverlap(SpriteKind.Boss2, SpriteKind.Player, function (sprite, otherSprite) {
     if (Shileded && Shileded.lifespan > 0) {
-        sprite.destroy()
+    	
     } else {
-        scene.cameraShake(3, 500)
-        music.smallCrash.play()
-        sprite.destroy()
-        otherSprite.destroy()
+        music.bigCrash.play()
+        scene.cameraShake(5, 1000)
         info.changeLifeBy(-1)
+        otherSprite.destroy()
+    }
+})
+sprites.onOverlap(SpriteKind.Player, SpriteKind.Minion, function (sprite, otherSprite) {
+    if (Shileded && Shileded.lifespan > 0) {
+        enemyDeath(otherSprite)
+    } else {
+        music.bigCrash.play()
+        info.changeLifeBy(-1)
+        enemyDeath(otherSprite)
+        sprite.destroy()
+        scene.cameraShake(4, 500)
         if (Doublefire && Doublefire.lifespan > 0) {
             Doublefire.lifespan = 0
         }
@@ -564,49 +642,42 @@ sprites.onOverlap(SpriteKind.Bossshot, SpriteKind.Player, function (sprite, othe
         }
     }
 })
-sprites.onOverlap(SpriteKind.Projectile, SpriteKind.Homingminion, function (sprite, otherSprite) {
-    music.zapped.play()
-    sprite.destroy()
-    otherSprite.startEffect(effects.warmRadial, 50)
-    statusbars.getStatusBarAttachedTo(StatusBarKind.homingminionHP, otherSprite).value += -100
-    info.changeScoreBy(75)
+statusbars.onZero(StatusBarKind.homingminionHP, function (status) {
+    enemyDeath(status.spriteAttachedTo())
 })
-controller.B.onEvent(ControllerButtonEvent.Pressed, function () {
-    if (Sprite3_Projectile && Sprite3_Projectile.lifespan > 0) {
-        if (does_miniship_exist == false) {
-            does_miniship_exist = true
-            Miniship = sprites.create(assets.image`myImage13`, SpriteKind.Miniplayer)
-            Miniship.follow(mySprite3, 1000)
-            timer.after(400, function () {
-                Miniship.follow(mySprite3, 0)
-            })
-            timer.after(2000, function () {
-                Miniship.destroy()
-                does_miniship_exist = false
-                laser = sprites.createProjectileFromSprite(img`
-                    . . . . . . . . 
-                    . . . . . . . . 
-                    . . . . . . . . 
-                    . . 2 2 2 2 . . 
-                    . . 2 5 5 2 . . 
-                    . . 2 5 5 2 . . 
-                    . . 4 5 5 4 . . 
-                    . . 4 5 5 4 . . 
-                    . . 4 5 5 4 . . 
-                    . . 4 4 4 4 . . 
-                    . . . 4 4 . . . 
-                    . . . . . . . . 
-                    . . . . . . . . 
-                    . . . . . . . . 
-                    . . . . . . . . 
-                    . . . . . . . . 
-                    `, Miniship, 0, -100)
-            })
-        }
-    }
-    pause(150)
-    if (inCharacterSelectionMenu) {
-        pause(11000)
+sprites.onOverlap(SpriteKind.Player, SpriteKind.PowerUP, function (sprite, otherSprite) {
+    otherSprite.destroy()
+    if (Doublefire && Doublefire.lifespan == 0) {
+        powerup.destroy()
+        powerup.lifespan = 0
+        music.powerUp.play()
+        info.changeScoreBy(1000)
+        powerupactivate = false
+    } else {
+        music.powerUp.play()
+        otherSprite.destroy()
+        Doublefire = sprites.create(img`
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . 9 . . . . . . . . . 
+            . . . . . 9 9 9 . . . . . . . . 
+            . . . . . 9 9 9 . . . . . . . . 
+            . . . . . 9 9 9 . . . . . . . . 
+            . . . . . 9 . 9 . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            `, SpriteKind.Mode)
+        Doublefire.setPosition(149, 108)
+        Doublefire.lifespan = 9999999
+        info.changeScoreBy(1000)
+        powerupactivate = false
     }
 })
 function bigenemydeath (bigenemy: Sprite) {
@@ -681,81 +752,46 @@ function bigenemydeath (bigenemy: Sprite) {
         }
     }
 }
-statusbars.onZero(StatusBarKind.bosshealth, function (status) {
-    boss1.destroy(effects.halo, 1000)
-    info.changeScoreBy(50000)
-    music.powerDown.stop()
-    bossfiretime.lifespan = 0
-    bossfiretime.lifespan += -999999
-    if (Math.percentChance(100)) {
-        Life = sprites.create(img`
-            . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . 
-            . . . 2 2 2 . . . 2 2 2 . . . 
-            . . 2 2 2 2 2 . 2 2 2 2 2 . . 
-            . 2 2 2 2 1 2 2 2 1 2 2 2 2 . 
-            . 2 2 2 2 1 2 2 2 1 2 2 2 2 . 
-            . 2 2 2 2 1 1 1 1 1 2 2 2 2 . 
-            . . 2 2 2 1 2 2 2 1 2 2 2 . . 
-            . . . 2 2 1 2 2 2 1 2 2 . . . 
-            . . . . 2 2 2 2 2 2 2 . . . . 
-            . . . . . 2 2 2 2 2 . . . . . 
-            . . . . . . 2 2 2 . . . . . . 
-            . . . . . . . 2 . . . . . . . 
-            . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . 
-            `, SpriteKind.Health)
-        characterAnimations.loopFrames(
-        Life,
-        assets.animation`myAnim13`,
-        500,
-        characterAnimations.rule(Predicate.Moving)
-        )
-        Life.x = boss1.x
-        Life.y = boss1.y
-        Life.lifespan = 25000
-        Life.setVelocity(randint(-40, 40), randint(-40, 40))
-        Life.setFlag(SpriteFlag.BounceOnWall, true)
-    }
-})
-sprites.onOverlap(SpriteKind.Projectile, SpriteKind.Boss2, function (sprite, otherSprite) {
-    music.zapped.play()
-    sprite.destroy(effects.warmRadial, 100)
-    statusbars.getStatusBarAttachedTo(StatusBarKind.boss2health, otherSprite).value += -0.4
-    if (Doublefire && Doublefire.lifespan > 0) {
-        statusbars.getStatusBarAttachedTo(StatusBarKind.boss2health, otherSprite).value += 0.1
-    }
-    if (tripplefire && tripplefire.lifespan > 0) {
-        statusbars.getStatusBarAttachedTo(StatusBarKind.boss2health, otherSprite).value += 0.07
-    }
-})
-sprites.onOverlap(SpriteKind.Boss, SpriteKind.Player, function (sprite, otherSprite) {
-    if (Shileded && Shileded.lifespan > 0) {
-    	
-    } else {
-        music.bigCrash.play()
-        scene.cameraShake(5, 1000)
-        info.changeLifeBy(-1)
-        otherSprite.destroy()
-    }
-})
-sprites.onOverlap(SpriteKind.Player, SpriteKind.Homingminion, function (sprite, otherSprite) {
-    if (Shileded && Shileded.lifespan > 0) {
-        enemyDeath(otherSprite)
-    } else {
-        music.bigCrash.play()
-        info.changeLifeBy(-1)
-        sprite.destroy()
-        enemyDeath(otherSprite)
-        scene.cameraShake(4, 500)
-        if (Doublefire && Doublefire.lifespan > 0) {
-            Doublefire.lifespan = 0
-        }
-        if (tripplefire && tripplefire.lifespan > 0) {
-            tripplefire.lifespan = 0
+controller.B.onEvent(ControllerButtonEvent.Pressed, function () {
+    if (Sprite3_Projectile && Sprite3_Projectile.lifespan > 0) {
+        if (does_miniship_exist == false) {
+            does_miniship_exist = true
+            Miniship = sprites.create(assets.image`myImage13`, SpriteKind.Miniplayer)
+            Miniship.follow(mySprite3, 1000)
+            timer.after(350, function () {
+                Miniship.follow(mySprite3, 0)
+            })
+            timer.after(2000, function () {
+                Miniship.destroy()
+                does_miniship_exist = false
+                laser = sprites.createProjectileFromSprite(img`
+                    . . . . . . . . 
+                    . . . . . . . . 
+                    . . . . . . . . 
+                    . . 2 2 2 2 . . 
+                    . . 2 5 5 2 . . 
+                    . . 2 5 5 2 . . 
+                    . . 4 5 5 4 . . 
+                    . . 4 5 5 4 . . 
+                    . . 4 5 5 4 . . 
+                    . . 4 4 4 4 . . 
+                    . . . 4 4 . . . 
+                    . . . . . . . . 
+                    . . . . . . . . 
+                    . . . . . . . . 
+                    . . . . . . . . 
+                    . . . . . . . . 
+                    `, Miniship, 0, -100)
+            })
         }
     }
+    pause(150)
+    if (inCharacterSelectionMenu) {
+        pause(11000)
+    }
+})
+info.onLifeZero(function () {
+    game.over(false)
 })
 function invincible (mySprite: Sprite) {
     music.beamUp.play()
@@ -773,36 +809,430 @@ function invincible (mySprite: Sprite) {
         music.beamUp.stop()
     })
 }
-statusbars.onStatusReached(StatusBarKind.boss2health, statusbars.StatusComparison.LTE, statusbars.ComparisonType.Percentage, 30, function (status) {
-    boss2.setVelocity(80, randint(40, 80))
-    timer.after(1000, function () {
-        animation.runMovementAnimation(
-        boss2,
-        animation.animationPresets(animation.easeUp),
-        1000,
-        false
+statusbars.onStatusReached(StatusBarKind.bosshealth, statusbars.StatusComparison.LTE, statusbars.ComparisonType.Percentage, 70, function (status) {
+    boss1.setVelocity(70, 0)
+})
+controller.A.onEvent(ControllerButtonEvent.Repeated, function () {
+    if (sprites.allOfKind(SpriteKind.Bomb).length > 0) {
+        music.beamUp.play()
+        Shileded = sprites.create(img`
+            . . . . . . . . . . . . . . . . . . . . . . 1 . . . 1 . . . . 
+            1 . . . . . . . . . . 1 . . . . . . . . 1 . 1 . . . 1 . . . . 
+            . . . . . . . . . . . . . . . . . . . . . . 1 . . . 1 . 1 1 1 
+            1 . 1 1 1 . 1 . . 1 . 1 . 1 1 1 . 1 1 . 1 . 1 1 1 . 1 . 1 1 1 
+            1 . 1 . 1 . . 1 . 1 . 1 . 1 . 1 . 1 . . 1 . 1 . 1 . 1 . 1 . . 
+            1 . 1 . 1 . . . 1 . . 1 . 1 . 1 . 1 1 . 1 . 1 1 1 . 1 . 1 1 1 
+            `, SpriteKind.Armor)
+        Shileded.setPosition(18, 15)
+        Shileded.lifespan = 3000
+        bonus = sprites.allOfKind(SpriteKind.Bomb).shift()
+        bonus.lifespan = 0
+        bonus.destroy()
+    }
+})
+sprites.onOverlap(SpriteKind.Boss2shot, SpriteKind.Player, function (sprite, otherSprite) {
+    if (Shileded && Shileded.lifespan > 0) {
+        sprite.destroy()
+    } else {
+        music.smallCrash.play()
+        scene.cameraShake(3, 500)
+        otherSprite.destroy()
+        sprite.destroy()
+        info.changeLifeBy(-1)
+        if (Doublefire && Doublefire.lifespan > 0) {
+            Doublefire.lifespan = 0
+        }
+        if (tripplefire && tripplefire.lifespan > 0) {
+            tripplefire.lifespan = 0
+        }
+    }
+})
+info.onCountdownEnd(function () {
+    if (inCharacterSelectionMenu) {
+        inCharacterSelectionMenu = false
+        mySprite.destroy()
+        mySprite2.destroy()
+        mySprite3.destroy()
+        selectcharindicator.destroy()
+        textSprite.setText("")
+        bonus = sprites.create(img`
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . 6 6 6 6 6 6 6 . . . . 
+            . . . . 6 6 9 9 9 9 9 6 6 . . . 
+            . . . . 6 9 9 1 9 9 9 9 6 . . . 
+            . . . . 6 9 9 1 9 9 9 9 6 . . . 
+            . . . . 6 9 9 1 1 1 9 9 6 . . . 
+            . . . . 6 6 9 9 9 9 9 6 6 . . . 
+            . . . . . 6 6 9 9 9 6 6 . . . . 
+            . . . . . . 6 6 9 6 6 . . . . . 
+            . . . . . . . 6 6 6 . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            `, SpriteKind.Bomb)
+        characterAnimations.loopFrames(
+        bonus,
+        assets.animation`myAnim7`,
+        200,
+        characterAnimations.rule(Predicate.NotMoving)
         )
-        boss2.y = 25
-        boss2.setVelocity(80, 0)
-        timer.after(3000, function () {
+        bonus.setPosition(10, 108)
+        bonus.lifespan = 999999999
+        if (currentlyselectedsprite == mySprite) {
+            mySprite = sprites.create(img`
+                . . . . . . . . . . 
+                . . . . 1 1 . . . . 
+                . . . 1 1 1 1 . . . 
+                . . 1 1 8 8 1 1 . . 
+                . . 1 8 d d 8 1 . . 
+                . 1 1 d 1 1 d 1 1 . 
+                1 1 1 d 1 1 d 1 1 1 
+                9 9 9 d 1 1 d 9 9 9 
+                1 1 1 d 8 8 d 1 1 1 
+                . . . 1 1 1 1 . . . 
+                . . . . 5 5 . . . . 
+                `, SpriteKind.Player)
+            Movement(mySprite)
+            mySprite.y = 120
+            mySprite.setStayInScreen(true)
+            controller.moveSprite(mySprite, 100, 100)
             animation.runMovementAnimation(
-            boss2,
+            mySprite,
             animation.animationPresets(animation.flyToCenter),
             2000,
             false
             )
-            timer.after(3000, function () {
-                animation.runMovementAnimation(
-                boss2,
-                animation.animationPresets(animation.easeUp),
-                2000,
-                false
-                )
-                boss2.y = 25
-                boss2.setVelocity(80, 0)
-            })
-        })
+        } else if (currentlyselectedsprite == mySprite2) {
+            mySprite2 = sprites.create(assets.image`myImage1`, SpriteKind.Player)
+            Sprite2movement()
+            mySprite2.y = 120
+            mySprite2.setStayInScreen(true)
+            controller.moveSprite(mySprite2, 200, 200)
+            animation.runMovementAnimation(
+            mySprite2,
+            animation.animationPresets(animation.flyToCenter),
+            2000,
+            false
+            )
+        } else {
+            does_miniship_exist = false
+            mySprite3 = sprites.create(img`
+                . . . . . . . . . . 
+                . . . . 2 2 . . . . 
+                . . . 2 2 2 2 . . . 
+                . . 2 2 1 1 2 2 . . 
+                . . 2 1 4 4 1 2 . . 
+                . 2 2 4 2 2 4 2 2 . 
+                2 2 2 4 2 2 4 2 2 2 
+                5 5 5 4 2 2 4 5 5 5 
+                2 2 2 4 1 1 4 2 2 2 
+                . . . 2 2 2 2 . . . 
+                . . . . 5 5 . . . . 
+                `, SpriteKind.Player)
+            Sprite3movement(mySprite)
+            mySprite3.y = 120
+            mySprite3.setStayInScreen(true)
+            controller.moveSprite(mySprite3, 90, 90)
+            animation.runMovementAnimation(
+            mySprite3,
+            animation.animationPresets(animation.flyToCenter),
+            2000,
+            false
+            )
+        }
+        music.powerUp.play()
+        startlevel()
+    }
+})
+sprites.onOverlap(SpriteKind.Player, SpriteKind.Minion2, function (sprite, otherSprite) {
+    if (Shileded && Shileded.lifespan > 0) {
+        Powerupdeath(minion2)
+    } else {
+        music.bigCrash.play()
+        info.changeLifeBy(-1)
+        scene.cameraShake(4, 500)
+        Powerupdeath(minion2)
+        sprite.destroy()
+        if (Doublefire && Doublefire.lifespan > 0) {
+            Doublefire.lifespan = 0
+        }
+    }
+})
+function spawntime () {
+    EnemySpawnTime = 20000
+    Enemy2spawntime = 35000
+    Minionspawn = randint(3500, 6500)
+    minion2spawn = 30000
+    timer.after(20000, function () {
+        EnemySpawnTime = randint(21000, 31000)
     })
+    timer.after(6500, function () {
+        Minionspawn = randint(4000, 7500)
+    })
+    timer.after(35000, function () {
+        Enemy2spawntime = randint(35000, 50000)
+    })
+}
+sprites.onOverlap(SpriteKind.Player, SpriteKind.Health, function (sprite, otherSprite) {
+    music.powerUp.play()
+    otherSprite.destroy()
+    info.changeLifeBy(1)
+})
+sprites.onOverlap(SpriteKind.Player, SpriteKind.Enemy2, function (sprite, otherSprite) {
+    if (Shileded && Shileded.lifespan > 0) {
+        callbigenemy2death(otherSprite)
+    } else {
+        music.bigCrash.play()
+        info.changeLifeBy(-1)
+        callbigenemy2death(otherSprite)
+        sprite.destroy()
+        scene.cameraShake(4, 500)
+        if (Doublefire && Doublefire.lifespan > 0) {
+            Doublefire.lifespan = 0
+        }
+        if (tripplefire && tripplefire.lifespan > 0) {
+            tripplefire.lifespan = 0
+        }
+    }
+})
+function Movement (mySprite: Sprite) {
+    characterAnimations.loopFrames(
+    mySprite,
+    [img`
+        . . . . 1 1 . . . . 
+        . . . 1 1 1 1 . . . 
+        . . 1 1 8 8 1 1 . . 
+        . . 1 8 d d 8 1 . . 
+        . 1 1 d 1 1 d 1 1 . 
+        1 1 1 d 1 1 d 1 1 1 
+        9 9 9 d 1 1 d 9 9 9 
+        1 1 1 d 8 8 d 1 1 1 
+        . . . 1 1 1 1 . . . 
+        . . . . 5 5 . . . . 
+        . . . . . . . . . . 
+        `,img`
+        . . . . 1 1 . . . . 
+        . . . 1 1 1 1 . . . 
+        . . 1 1 8 8 1 1 . . 
+        . . 1 8 d d 8 1 . . 
+        . 1 1 d 1 1 d 1 1 . 
+        1 1 1 d 1 1 d 1 1 1 
+        9 9 9 d 1 1 d 9 9 9 
+        1 1 1 d 8 8 d 1 1 1 
+        . . . 1 1 1 1 . . . 
+        . . . . 5 5 . . . . 
+        . . . . . . . . . . 
+        `,img`
+        . . . . . . . . . . 
+        . . . . 1 1 . . . . 
+        . . . 1 1 1 1 . . . 
+        . . 1 1 8 8 1 1 . . 
+        . . 1 8 d d 8 1 . . 
+        . 1 1 d 1 1 d 1 1 . 
+        1 1 1 d 1 1 d 1 1 1 
+        9 9 9 d 1 1 d 9 9 9 
+        1 1 1 d 8 8 d 1 1 1 
+        . . . 1 1 1 1 . . . 
+        . . . . . . . . . . 
+        `,img`
+        . . . . . . . . . . 
+        . . . . 1 1 . . . . 
+        . . . 1 1 1 1 . . . 
+        . . 1 1 8 8 1 1 . . 
+        . . 1 8 d d 8 1 . . 
+        . 1 1 d 1 1 d 1 1 . 
+        1 1 1 d 1 1 d 1 1 1 
+        9 9 9 d 1 1 d 9 9 9 
+        1 1 1 d 8 8 d 1 1 1 
+        . . . 1 1 1 1 . . . 
+        . . . . 5 5 . . . . 
+        `,img`
+        . . . . 1 1 . . . . 
+        . . . 1 1 1 1 . . . 
+        . . 1 1 8 8 1 1 . . 
+        . . 1 8 d d 8 1 . . 
+        . 1 1 d 1 1 d 1 1 . 
+        1 1 1 d 1 1 d 1 1 1 
+        9 9 9 d 1 1 d 9 9 9 
+        1 1 1 d 8 8 d 1 1 1 
+        . . . 1 1 1 1 . . . 
+        . . . . 5 5 . . . . 
+        . . . . . . . . . . 
+        `,img`
+        . . . . 1 1 . . . . 
+        . . . 1 1 1 1 . . . 
+        . . 1 1 8 8 1 1 . . 
+        . . 1 8 d d 8 1 . . 
+        . 1 1 d 1 1 d 1 1 . 
+        1 1 1 d 1 1 d 1 1 1 
+        9 9 9 d 1 1 d 9 9 9 
+        1 1 1 d 8 8 d 1 1 1 
+        . . . 1 1 1 1 . . . 
+        . . . . . . . . . . 
+        . . . . . . . . . . 
+        `],
+    200,
+    characterAnimations.rule(Predicate.NotMoving)
+    )
+    characterAnimations.runFrames(
+    mySprite,
+    [img`
+        . . . . . . . . . . 
+        . . . . 1 1 . . . . 
+        . . . 1 1 1 1 . . . 
+        . . 1 8 8 1 1 1 . . 
+        . . 1 d d 8 1 1 1 . 
+        . 1 1 1 1 d 1 1 1 . 
+        . 1 1 1 1 d 1 1 1 . 
+        . 9 1 1 1 d 9 9 9 . 
+        . 1 1 8 8 d 1 1 1 . 
+        . . . 1 1 1 1 . . . 
+        . . . . 5 5 . . . . 
+        `, img`
+        . . . . . . . . . . 
+        . . . . 1 . . . . . 
+        . . . . 1 1 . . . . 
+        . . . 1 8 1 1 . . . 
+        . . . 1 d 8 1 1 . . 
+        . . 1 1 1 d 1 1 1 . 
+        . . 1 1 1 d 1 1 1 . 
+        . . 9 1 1 d 9 9 9 . 
+        . . 1 1 8 d 1 1 1 . 
+        . . . 1 1 1 1 . . . 
+        . . . . 5 5 . . . . 
+        `],
+    500,
+    characterAnimations.rule(Predicate.MovingLeft)
+    )
+    characterAnimations.runFrames(
+    mySprite,
+    [img`
+        . . . . . . . . . . 
+        . . . . 1 1 . . . . 
+        . . . 1 1 1 1 . . . 
+        . . 1 1 1 8 8 1 . . 
+        . 1 1 1 8 d d 1 . . 
+        . 1 1 1 d 1 1 1 1 . 
+        . 1 1 1 d 1 1 1 1 . 
+        . 9 9 9 d 1 1 1 9 . 
+        . 1 1 1 d 8 8 1 1 . 
+        . . . 1 1 1 1 . . . 
+        . . . . 5 5 . . . . 
+        `, img`
+        . . . . . . . . . . 
+        . . . . . 1 . . . . 
+        . . . . 1 1 . . . . 
+        . . . 1 1 8 1 . . . 
+        . . 1 1 8 d 1 . . . 
+        . 1 1 1 d 1 1 1 . . 
+        . 1 1 1 d 1 1 1 . . 
+        . 9 9 9 d 1 1 9 . . 
+        . 1 1 1 d 8 1 1 . . 
+        . . . 1 1 1 1 . . . 
+        . . . . 5 5 . . . . 
+        `],
+    500,
+    characterAnimations.rule(Predicate.MovingRight)
+    )
+    characterAnimations.runFrames(
+    mySprite,
+    [img`
+        . . . . 1 1 . . . . 
+        . . . 1 1 1 1 . . . 
+        . . 1 1 8 8 1 1 . . 
+        . . 1 8 d d 8 1 . . 
+        . 1 1 d 1 1 d 1 1 . 
+        1 1 1 d 1 1 d 1 1 1 
+        9 9 9 d 1 1 d 9 9 9 
+        1 1 1 d 8 8 d 1 1 1 
+        . . . 1 1 1 1 . . . 
+        . . . 9 9 9 9 . . . 
+        . . . . 9 9 . . . . 
+        `, img`
+        . . . . 1 1 . . . . 
+        . . . 1 1 1 1 . . . 
+        . . 1 1 8 8 1 1 . . 
+        . . 1 8 d d 8 1 . . 
+        . 1 1 d 1 1 d 1 1 . 
+        1 1 1 d 1 1 d 1 1 1 
+        9 9 9 d 1 1 d 9 9 9 
+        1 1 1 d 8 8 d 1 1 1 
+        . . . 1 1 1 1 . . . 
+        . . . 9 5 5 9 . . . 
+        . . . 9 9 9 9 . . . 
+        . . . . 9 9 . . . . 
+        `],
+    500,
+    characterAnimations.rule(Predicate.MovingUp)
+    )
+    characterAnimations.runFrames(
+    mySprite,
+    [img`
+        . . . . . . . . . . 
+        . . . . . . . . . . 
+        . . . . 1 1 . . . . 
+        . . . 1 1 1 1 . . . 
+        . . 1 1 8 8 1 1 . . 
+        . . 1 8 d d 8 1 . . 
+        . 1 1 d 1 1 d 1 1 . 
+        1 1 1 d 1 1 d 1 1 1 
+        9 9 9 d 1 1 d 9 9 9 
+        1 1 1 d 8 8 d 1 1 1 
+        . . . 1 1 1 1 . . . 
+        `, img`
+        . . . . . . . . . . 
+        . . . . . . . . . . 
+        . . . . . . . . . . 
+        . . . . 1 1 . . . . 
+        . . . 1 1 1 1 . . . 
+        . . 1 1 8 8 1 1 . . 
+        . . 1 8 d d 8 1 . . 
+        . 1 1 d 1 1 d 1 1 . 
+        1 1 1 d 1 1 d 1 1 1 
+        9 9 9 d 1 1 d 9 9 9 
+        1 1 1 d 8 8 d 1 1 1 
+        . . . 1 1 1 1 . . . 
+        `],
+    500,
+    characterAnimations.rule(Predicate.MovingDown)
+    )
+    Sprite1_Projectile = sprites.create(img`
+        . . . . . . . . . . . . . . . . 
+        . . . . . . . . . . . . . . . . 
+        . . . . . . . . . . . . . . . . 
+        . . . . . . . . . . . . . . . . 
+        . . . . . . . . . . . . . . . . 
+        . . . . . . . . . . . . . . . . 
+        . . . . . . . . . . . . . . . . 
+        . . . . . . . . . . . . . . . . 
+        . . . . . . . . . . . . . . . . 
+        . . . . . . . . . . . . . . . . 
+        . . . . . . . . . . . . . . . . 
+        . . . . . . . . . . . . . . . . 
+        . . . . . . . . . . . . . . . . 
+        . . . . . . . . . . . . . . . . 
+        . . . . . . . . . . . . . . . . 
+        . . . . . . . . . . . . . . . . 
+        `, SpriteKind.Projectiletimer)
+    Sprite1_Projectile.lifespan = 999999
+}
+statusbars.onStatusReached(StatusBarKind.boss2health, statusbars.StatusComparison.LTE, statusbars.ComparisonType.Percentage, 50, function (status) {
+    if (Math.percentChance(100)) {
+        boss2.setVelocity(80, randint(40, 80))
+        timer.after(3000, function () {
+            animation.runMovementAnimation(
+            boss2,
+            animation.animationPresets(animation.easeUp),
+            1000,
+            false
+            )
+            boss2.y = 25
+            boss2.setVelocity(80, 0)
+        })
+    }
 })
 controller.A.onEvent(ControllerButtonEvent.Pressed, function () {
     if (inCharacterSelectionMenu) {
@@ -1061,329 +1491,137 @@ controller.A.onEvent(ControllerButtonEvent.Pressed, function () {
     pause(150)
     Fire.setFlag(SpriteFlag.AutoDestroy, true)
 })
-sprites.onOverlap(SpriteKind.Projectile, SpriteKind.Boss, function (sprite, otherSprite) {
-    music.zapped.play()
-    sprite.destroy(effects.warmRadial, 100)
-    statusbars.getStatusBarAttachedTo(StatusBarKind.bosshealth, otherSprite).value += -0.6
+sprites.onDestroyed(SpriteKind.Player, function (sprite) {
     if (Doublefire && Doublefire.lifespan > 0) {
-        statusbars.getStatusBarAttachedTo(StatusBarKind.bosshealth, otherSprite).value += 0.2
+        Doublefire.lifespan = 0
     }
     if (tripplefire && tripplefire.lifespan > 0) {
-        statusbars.getStatusBarAttachedTo(StatusBarKind.bosshealth, otherSprite).value += 0.2
+        tripplefire.lifespan = 0
     }
-})
-sprites.onOverlap(SpriteKind.Projectile, SpriteKind.Minion, function (sprite, otherSprite) {
-    music.zapped.play()
-    sprite.destroy()
-    otherSprite.startEffect(effects.warmRadial, 50)
-    statusbars.getStatusBarAttachedTo(StatusBarKind.EnemyHealth, otherSprite).value += -33
-    info.changeScoreBy(41)
-    if (Doublefire && Doublefire.lifespan > 0) {
-        statusbars.getStatusBarAttachedTo(StatusBarKind.EnemyHealth, otherSprite).value += 5.5
+    if (Sprite1_Projectile && Sprite1_Projectile.lifespan > 0) {
+        mySprite = sprites.create(assets.image`myImage2`, SpriteKind.Player)
+        invincible(mySprite)
+        mySprite.y = 120
+        Movement(mySprite)
+        mySprite.setStayInScreen(true)
+        controller.moveSprite(mySprite, 120, 120)
+        mySprite.setFlag(SpriteFlag.Invisible, true)
+        timer.after(500, function () {
+            mySprite.setFlag(SpriteFlag.Invisible, false)
+            timer.after(500, function () {
+                mySprite.setFlag(SpriteFlag.Invisible, true)
+                timer.after(500, function () {
+                    mySprite.setFlag(SpriteFlag.Invisible, false)
+                })
+            })
+        })
     }
-    if (tripplefire && tripplefire.lifespan > 0) {
-        statusbars.getStatusBarAttachedTo(StatusBarKind.EnemyHealth, otherSprite).value += 4.5
+    if (Sprite2_projetile && Sprite2_projetile.lifespan > 0) {
+        mySprite2 = sprites.create(assets.image`myImage1`, SpriteKind.Player)
+        invincible(mySprite)
+        mySprite2.y = 120
+        Sprite2movement()
+        mySprite2.setStayInScreen(true)
+        controller.moveSprite(mySprite2, 120, 120)
+        mySprite2.setFlag(SpriteFlag.Invisible, true)
+        timer.after(500, function () {
+            mySprite2.setFlag(SpriteFlag.Invisible, false)
+            timer.after(500, function () {
+                mySprite2.setFlag(SpriteFlag.Invisible, true)
+                timer.after(500, function () {
+                    mySprite2.setFlag(SpriteFlag.Invisible, false)
+                })
+            })
+        })
     }
-})
-sprites.onOverlap(SpriteKind.Player, SpriteKind.Powerup2, function (sprite, otherSprite) {
-    if (tripplefire && tripplefire.lifespan == 0) {
-        music.powerUp.play()
-        otherSprite.destroy()
-        powerup2.lifespan = 0
-        info.changeScoreBy(1000)
-        powerupactivate = false
+    if (Sprite3_Projectile && Sprite3_Projectile.lifespan > 0) {
+        mySprite3 = sprites.create(img`
+            . . . . . . . . . . 
+            . . . . 2 2 . . . . 
+            . . . 2 2 2 2 . . . 
+            . . 2 2 1 1 2 2 . . 
+            . . 2 1 4 4 1 2 . . 
+            . 2 2 4 2 2 4 2 2 . 
+            2 2 2 4 2 2 4 2 2 2 
+            5 5 5 4 2 2 4 5 5 5 
+            2 2 2 4 1 1 4 2 2 2 
+            . . . 2 2 2 2 . . . 
+            . . . . 5 5 . . . . 
+            `, SpriteKind.Player)
+        mySprite3.y = 120
+        Sprite3invincible()
+        mySprite3.setStayInScreen(true)
+        controller.moveSprite(mySprite3, 90, 90)
+        Sprite3movement(mySprite)
+        mySprite3.setFlag(SpriteFlag.Invisible, true)
+        timer.after(500, function () {
+            mySprite3.setFlag(SpriteFlag.Invisible, false)
+            timer.after(500, function () {
+                mySprite3.setFlag(SpriteFlag.Invisible, true)
+                timer.after(500, function () {
+                    mySprite3.setFlag(SpriteFlag.Invisible, false)
+                })
+            })
+        })
+    }
+    if (Math.percentChance(50)) {
+        powerup = sprites.create(img`
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . 9 9 9 9 9 9 . . . . . 
+            . . . 6 9 9 1 1 1 1 9 9 6 . . . 
+            . . . 6 9 9 1 9 9 1 9 9 6 . . . 
+            . . . 6 9 9 1 1 1 1 9 9 6 . . . 
+            . . . 6 9 9 1 9 9 9 9 9 6 . . . 
+            . . . 6 9 9 1 9 9 9 9 9 6 . . . 
+            . . . . . 9 9 9 9 9 9 . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            `, SpriteKind.PowerUP)
+        characterAnimations.loopFrames(
+        powerup,
+        assets.animation`myAnim10`,
+        200,
+        characterAnimations.rule(Predicate.Moving)
+        )
+        powerup.lifespan = 10000
+        powerup.setVelocity(100, randint(-40, 60))
+        powerup.setFlag(SpriteFlag.BounceOnWall, true)
     } else {
-        music.powerUp.play()
-        otherSprite.destroy()
-        tripplefire = sprites.create(img`
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . 6 . . . . . 
-            . . . . . . . . . 6 6 6 . . . . 
-            . . . . . . . . . 6 6 6 . . . . 
-            . . . . . . . . . 6 6 6 . . . . 
-            . . . . . . . . . 6 . 6 . . . . 
+        powerup2 = sprites.create(img`
             . . . . . . . . . . . . . . . . 
             . . . . . . . . . . . . . . . . 
             . . . . . . . . . . . . . . . . 
             . . . . . . . . . . . . . . . . 
             . . . . . . . . . . . . . . . . 
+            . . . . . 6 6 6 6 6 6 . . . . . 
+            . . . c 6 6 1 1 1 1 6 6 c . . . 
+            . . . c 6 6 1 6 6 1 6 6 c . . . 
+            . . . c 6 6 1 1 1 1 6 6 c . . . 
+            . . . c 6 6 1 6 6 6 6 6 c . . . 
+            . . . c 6 6 1 6 6 6 6 6 c . . . 
+            . . . . . 6 6 6 6 6 6 . . . . . 
             . . . . . . . . . . . . . . . . 
             . . . . . . . . . . . . . . . . 
-            `, SpriteKind.mode2)
-        tripplefire.setPosition(149, 108)
-        tripplefire.lifespan = 9999999
-        info.changeScoreBy(1000)
-        powerup2activate = false
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            `, SpriteKind.Powerup2)
+        characterAnimations.loopFrames(
+        powerup2,
+        assets.animation`myAnim15`,
+        200,
+        characterAnimations.rule(Predicate.Moving)
+        )
+        powerup2.lifespan = 10000
+        powerup2.setVelocity(100, randint(-40, 60))
+        powerup2.setFlag(SpriteFlag.BounceOnWall, true)
     }
 })
-controller.left.onEvent(ControllerButtonEvent.Pressed, function () {
-    if (inCharacterSelectionMenu) {
-        if (currentlyselectedsprite == mySprite) {
-            currentlyselectedsprite = mySprite3
-            music.knock.play()
-        } else if (currentlyselectedsprite == mySprite3) {
-            currentlyselectedsprite = mySprite2
-            music.knock.play()
-        } else {
-            music.knock.play()
-            currentlyselectedsprite = mySprite
-        }
-    } else {
-    	
-    }
-})
-function spawntime () {
-    EnemySpawnTime = 20000
-    Enemy2spawntime = 35000
-    Minionspawn = randint(3500, 6500)
-    minion2spawn = 30000
-    timer.after(20000, function () {
-        EnemySpawnTime = randint(21000, 31000)
-    })
-    timer.after(6500, function () {
-        Minionspawn = randint(4000, 7500)
-    })
-    timer.after(35000, function () {
-        Enemy2spawntime = randint(35000, 50000)
-    })
-}
-sprites.onOverlap(SpriteKind.Projectile, SpriteKind.Minion2, function (sprite, otherSprite) {
-    music.zapped.play()
-    sprite.destroy()
-    otherSprite.startEffect(effects.warmRadial, 50)
-    statusbars.getStatusBarAttachedTo(StatusBarKind.poweruphealth, otherSprite).value += -50
-    info.changeScoreBy(500)
-    if (Doublefire && Doublefire.lifespan > 0) {
-        statusbars.getStatusBarAttachedTo(StatusBarKind.poweruphealth, otherSprite).value += 10
-    }
-    if (tripplefire && tripplefire.lifespan > 0) {
-        statusbars.getStatusBarAttachedTo(StatusBarKind.poweruphealth, otherSprite).value += 7
-    }
-})
-function Movement (mySprite: Sprite) {
-    characterAnimations.loopFrames(
-    mySprite,
-    [img`
-        . . . . 1 1 . . . . 
-        . . . 1 1 1 1 . . . 
-        . . 1 1 8 8 1 1 . . 
-        . . 1 8 d d 8 1 . . 
-        . 1 1 d 1 1 d 1 1 . 
-        1 1 1 d 1 1 d 1 1 1 
-        9 9 9 d 1 1 d 9 9 9 
-        1 1 1 d 8 8 d 1 1 1 
-        . . . 1 1 1 1 . . . 
-        . . . . 5 5 . . . . 
-        . . . . . . . . . . 
-        `,img`
-        . . . . 1 1 . . . . 
-        . . . 1 1 1 1 . . . 
-        . . 1 1 8 8 1 1 . . 
-        . . 1 8 d d 8 1 . . 
-        . 1 1 d 1 1 d 1 1 . 
-        1 1 1 d 1 1 d 1 1 1 
-        9 9 9 d 1 1 d 9 9 9 
-        1 1 1 d 8 8 d 1 1 1 
-        . . . 1 1 1 1 . . . 
-        . . . . 5 5 . . . . 
-        . . . . . . . . . . 
-        `,img`
-        . . . . . . . . . . 
-        . . . . 1 1 . . . . 
-        . . . 1 1 1 1 . . . 
-        . . 1 1 8 8 1 1 . . 
-        . . 1 8 d d 8 1 . . 
-        . 1 1 d 1 1 d 1 1 . 
-        1 1 1 d 1 1 d 1 1 1 
-        9 9 9 d 1 1 d 9 9 9 
-        1 1 1 d 8 8 d 1 1 1 
-        . . . 1 1 1 1 . . . 
-        . . . . . . . . . . 
-        `,img`
-        . . . . . . . . . . 
-        . . . . 1 1 . . . . 
-        . . . 1 1 1 1 . . . 
-        . . 1 1 8 8 1 1 . . 
-        . . 1 8 d d 8 1 . . 
-        . 1 1 d 1 1 d 1 1 . 
-        1 1 1 d 1 1 d 1 1 1 
-        9 9 9 d 1 1 d 9 9 9 
-        1 1 1 d 8 8 d 1 1 1 
-        . . . 1 1 1 1 . . . 
-        . . . . 5 5 . . . . 
-        `,img`
-        . . . . 1 1 . . . . 
-        . . . 1 1 1 1 . . . 
-        . . 1 1 8 8 1 1 . . 
-        . . 1 8 d d 8 1 . . 
-        . 1 1 d 1 1 d 1 1 . 
-        1 1 1 d 1 1 d 1 1 1 
-        9 9 9 d 1 1 d 9 9 9 
-        1 1 1 d 8 8 d 1 1 1 
-        . . . 1 1 1 1 . . . 
-        . . . . 5 5 . . . . 
-        . . . . . . . . . . 
-        `,img`
-        . . . . 1 1 . . . . 
-        . . . 1 1 1 1 . . . 
-        . . 1 1 8 8 1 1 . . 
-        . . 1 8 d d 8 1 . . 
-        . 1 1 d 1 1 d 1 1 . 
-        1 1 1 d 1 1 d 1 1 1 
-        9 9 9 d 1 1 d 9 9 9 
-        1 1 1 d 8 8 d 1 1 1 
-        . . . 1 1 1 1 . . . 
-        . . . . . . . . . . 
-        . . . . . . . . . . 
-        `],
-    200,
-    characterAnimations.rule(Predicate.NotMoving)
-    )
-    characterAnimations.runFrames(
-    mySprite,
-    [img`
-        . . . . . . . . . . 
-        . . . . 1 1 . . . . 
-        . . . 1 1 1 1 . . . 
-        . . 1 8 8 1 1 1 . . 
-        . . 1 d d 8 1 1 1 . 
-        . 1 1 1 1 d 1 1 1 . 
-        . 1 1 1 1 d 1 1 1 . 
-        . 9 1 1 1 d 9 9 9 . 
-        . 1 1 8 8 d 1 1 1 . 
-        . . . 1 1 1 1 . . . 
-        . . . . 5 5 . . . . 
-        `, img`
-        . . . . . . . . . . 
-        . . . . 1 . . . . . 
-        . . . . 1 1 . . . . 
-        . . . 1 8 1 1 . . . 
-        . . . 1 d 8 1 1 . . 
-        . . 1 1 1 d 1 1 1 . 
-        . . 1 1 1 d 1 1 1 . 
-        . . 9 1 1 d 9 9 9 . 
-        . . 1 1 8 d 1 1 1 . 
-        . . . 1 1 1 1 . . . 
-        . . . . 5 5 . . . . 
-        `],
-    500,
-    characterAnimations.rule(Predicate.MovingLeft)
-    )
-    characterAnimations.runFrames(
-    mySprite,
-    [img`
-        . . . . . . . . . . 
-        . . . . 1 1 . . . . 
-        . . . 1 1 1 1 . . . 
-        . . 1 1 1 8 8 1 . . 
-        . 1 1 1 8 d d 1 . . 
-        . 1 1 1 d 1 1 1 1 . 
-        . 1 1 1 d 1 1 1 1 . 
-        . 9 9 9 d 1 1 1 9 . 
-        . 1 1 1 d 8 8 1 1 . 
-        . . . 1 1 1 1 . . . 
-        . . . . 5 5 . . . . 
-        `, img`
-        . . . . . . . . . . 
-        . . . . . 1 . . . . 
-        . . . . 1 1 . . . . 
-        . . . 1 1 8 1 . . . 
-        . . 1 1 8 d 1 . . . 
-        . 1 1 1 d 1 1 1 . . 
-        . 1 1 1 d 1 1 1 . . 
-        . 9 9 9 d 1 1 9 . . 
-        . 1 1 1 d 8 1 1 . . 
-        . . . 1 1 1 1 . . . 
-        . . . . 5 5 . . . . 
-        `],
-    500,
-    characterAnimations.rule(Predicate.MovingRight)
-    )
-    characterAnimations.runFrames(
-    mySprite,
-    [img`
-        . . . . 1 1 . . . . 
-        . . . 1 1 1 1 . . . 
-        . . 1 1 8 8 1 1 . . 
-        . . 1 8 d d 8 1 . . 
-        . 1 1 d 1 1 d 1 1 . 
-        1 1 1 d 1 1 d 1 1 1 
-        9 9 9 d 1 1 d 9 9 9 
-        1 1 1 d 8 8 d 1 1 1 
-        . . . 1 1 1 1 . . . 
-        . . . 9 9 9 9 . . . 
-        . . . . 9 9 . . . . 
-        `, img`
-        . . . . 1 1 . . . . 
-        . . . 1 1 1 1 . . . 
-        . . 1 1 8 8 1 1 . . 
-        . . 1 8 d d 8 1 . . 
-        . 1 1 d 1 1 d 1 1 . 
-        1 1 1 d 1 1 d 1 1 1 
-        9 9 9 d 1 1 d 9 9 9 
-        1 1 1 d 8 8 d 1 1 1 
-        . . . 1 1 1 1 . . . 
-        . . . 9 5 5 9 . . . 
-        . . . 9 9 9 9 . . . 
-        . . . . 9 9 . . . . 
-        `],
-    500,
-    characterAnimations.rule(Predicate.MovingUp)
-    )
-    characterAnimations.runFrames(
-    mySprite,
-    [img`
-        . . . . . . . . . . 
-        . . . . . . . . . . 
-        . . . . 1 1 . . . . 
-        . . . 1 1 1 1 . . . 
-        . . 1 1 8 8 1 1 . . 
-        . . 1 8 d d 8 1 . . 
-        . 1 1 d 1 1 d 1 1 . 
-        1 1 1 d 1 1 d 1 1 1 
-        9 9 9 d 1 1 d 9 9 9 
-        1 1 1 d 8 8 d 1 1 1 
-        . . . 1 1 1 1 . . . 
-        `, img`
-        . . . . . . . . . . 
-        . . . . . . . . . . 
-        . . . . . . . . . . 
-        . . . . 1 1 . . . . 
-        . . . 1 1 1 1 . . . 
-        . . 1 1 8 8 1 1 . . 
-        . . 1 8 d d 8 1 . . 
-        . 1 1 d 1 1 d 1 1 . 
-        1 1 1 d 1 1 d 1 1 1 
-        9 9 9 d 1 1 d 9 9 9 
-        1 1 1 d 8 8 d 1 1 1 
-        . . . 1 1 1 1 . . . 
-        `],
-    500,
-    characterAnimations.rule(Predicate.MovingDown)
-    )
-    Sprite1_Projectile = sprites.create(img`
-        . . . . . . . . . . . . . . . . 
-        . . . . . . . . . . . . . . . . 
-        . . . . . . . . . . . . . . . . 
-        . . . . . . . . . . . . . . . . 
-        . . . . . . . . . . . . . . . . 
-        . . . . . . . . . . . . . . . . 
-        . . . . . . . . . . . . . . . . 
-        . . . . . . . . . . . . . . . . 
-        . . . . . . . . . . . . . . . . 
-        . . . . . . . . . . . . . . . . 
-        . . . . . . . . . . . . . . . . 
-        . . . . . . . . . . . . . . . . 
-        . . . . . . . . . . . . . . . . 
-        . . . . . . . . . . . . . . . . 
-        . . . . . . . . . . . . . . . . 
-        . . . . . . . . . . . . . . . . 
-        `, SpriteKind.Projectiletimer)
-    Sprite1_Projectile.lifespan = 999999
-}
 statusbars.onStatusReached(StatusBarKind.boss2health, statusbars.StatusComparison.EQ, statusbars.ComparisonType.Percentage, 75, function (status) {
     if (Math.percentChance(100)) {
         boss2.setVelocity(80, randint(40, 80))
@@ -1407,166 +1645,18 @@ statusbars.onStatusReached(StatusBarKind.boss2health, statusbars.StatusCompariso
         })
     }
 })
-info.onCountdownEnd(function () {
-    if (inCharacterSelectionMenu) {
-        inCharacterSelectionMenu = false
-        mySprite.destroy()
-        mySprite2.destroy()
-        mySprite3.destroy()
-        selectcharindicator.destroy()
-        textSprite.setText("")
-        bonus = sprites.create(img`
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . 6 6 6 6 6 6 6 . . . . 
-            . . . . 6 6 9 9 9 9 9 6 6 . . . 
-            . . . . 6 9 9 1 9 9 9 9 6 . . . 
-            . . . . 6 9 9 1 9 9 9 9 6 . . . 
-            . . . . 6 9 9 1 1 1 9 9 6 . . . 
-            . . . . 6 6 9 9 9 9 9 6 6 . . . 
-            . . . . . 6 6 9 9 9 6 6 . . . . 
-            . . . . . . 6 6 9 6 6 . . . . . 
-            . . . . . . . 6 6 6 . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            `, SpriteKind.Bomb)
-        characterAnimations.loopFrames(
-        bonus,
-        assets.animation`myAnim7`,
-        200,
-        characterAnimations.rule(Predicate.NotMoving)
-        )
-        bonus.setPosition(10, 108)
-        bonus.lifespan = 999999999
-        if (currentlyselectedsprite == mySprite) {
-            mySprite = sprites.create(img`
-                . . . . . . . . . . 
-                . . . . 1 1 . . . . 
-                . . . 1 1 1 1 . . . 
-                . . 1 1 8 8 1 1 . . 
-                . . 1 8 d d 8 1 . . 
-                . 1 1 d 1 1 d 1 1 . 
-                1 1 1 d 1 1 d 1 1 1 
-                9 9 9 d 1 1 d 9 9 9 
-                1 1 1 d 8 8 d 1 1 1 
-                . . . 1 1 1 1 . . . 
-                . . . . 5 5 . . . . 
-                `, SpriteKind.Player)
-            Movement(mySprite)
-            mySprite.y = 120
-            mySprite.setStayInScreen(true)
-            controller.moveSprite(mySprite, 100, 100)
-            animation.runMovementAnimation(
-            mySprite,
-            animation.animationPresets(animation.flyToCenter),
-            2000,
-            false
-            )
-        } else if (currentlyselectedsprite == mySprite2) {
-            mySprite2 = sprites.create(assets.image`myImage1`, SpriteKind.Player)
-            Sprite2movement()
-            mySprite2.y = 120
-            mySprite2.setStayInScreen(true)
-            controller.moveSprite(mySprite2, 200, 200)
-            animation.runMovementAnimation(
-            mySprite2,
-            animation.animationPresets(animation.flyToCenter),
-            2000,
-            false
-            )
-        } else {
-            does_miniship_exist = false
-            mySprite3 = sprites.create(img`
-                . . . . . . . . . . 
-                . . . . 2 2 . . . . 
-                . . . 2 2 2 2 . . . 
-                . . 2 2 1 1 2 2 . . 
-                . . 2 1 4 4 1 2 . . 
-                . 2 2 4 2 2 4 2 2 . 
-                2 2 2 4 2 2 4 2 2 2 
-                5 5 5 4 2 2 4 5 5 5 
-                2 2 2 4 1 1 4 2 2 2 
-                . . . 2 2 2 2 . . . 
-                . . . . 5 5 . . . . 
-                `, SpriteKind.Player)
-            Sprite3movement(mySprite)
-            mySprite3.y = 120
-            mySprite3.setStayInScreen(true)
-            controller.moveSprite(mySprite3, 90, 90)
-            animation.runMovementAnimation(
-            mySprite3,
-            animation.animationPresets(animation.flyToCenter),
-            2000,
-            false
-            )
-        }
-        music.powerUp.play()
-        startlevel()
-    }
-})
-statusbars.onZero(StatusBarKind.EnemyHealth, function (status) {
-    enemyDeath(status.spriteAttachedTo())
-})
 function enemyDeath (enemy1: Sprite) {
     enemy1.destroy(effects.disintegrate, 500)
     info.changeScoreBy(500)
 }
-statusbars.onZero(StatusBarKind.bigenemyhealth2, function (status) {
-    callbigenemy2death(status.spriteAttachedTo())
-})
-statusbars.onZero(StatusBarKind.boss2health, function (status) {
-    boss2.destroy(effects.fountain, 1000)
-    info.changeScoreBy(50000)
-    music.powerDown.stop()
-    Bossfiretime2.lifespan = 0
-    Bossfiretime2.lifespan += -999999
-    if (Math.percentChance(100)) {
-        Life = sprites.create(img`
-            . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . 
-            . . . 2 2 2 . . . 2 2 2 . . . 
-            . . 2 2 2 2 2 . 2 2 2 2 2 . . 
-            . 2 2 2 2 1 2 2 2 1 2 2 2 2 . 
-            . 2 2 2 2 1 2 2 2 1 2 2 2 2 . 
-            . 2 2 2 2 1 1 1 1 1 2 2 2 2 . 
-            . . 2 2 2 1 2 2 2 1 2 2 2 . . 
-            . . . 2 2 1 2 2 2 1 2 2 . . . 
-            . . . . 2 2 2 2 2 2 2 . . . . 
-            . . . . . 2 2 2 2 2 . . . . . 
-            . . . . . . 2 2 2 . . . . . . 
-            . . . . . . . 2 . . . . . . . 
-            . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . 
-            `, SpriteKind.Health)
-        characterAnimations.loopFrames(
-        Life,
-        assets.animation`myAnim13`,
-        500,
-        characterAnimations.rule(Predicate.Moving)
-        )
-        Life.x = boss2.x
-        Life.y = boss2.y
-        Life.lifespan = 25000
-        Life.setVelocity(randint(-40, 40), randint(-40, 40))
-        Life.setFlag(SpriteFlag.BounceOnWall, true)
-    }
-})
-sprites.onOverlap(SpriteKind.Player, SpriteKind.Minion2, function (sprite, otherSprite) {
+sprites.onOverlap(SpriteKind.Boss, SpriteKind.Player, function (sprite, otherSprite) {
     if (Shileded && Shileded.lifespan > 0) {
-        Powerupdeath(minion2)
+    	
     } else {
         music.bigCrash.play()
+        scene.cameraShake(5, 1000)
         info.changeLifeBy(-1)
-        scene.cameraShake(4, 500)
-        Powerupdeath(minion2)
-        sprite.destroy()
-        if (Doublefire && Doublefire.lifespan > 0) {
-            Doublefire.lifespan = 0
-        }
+        otherSprite.destroy()
     }
 })
 function Sprite3invincible () {
@@ -1585,49 +1675,62 @@ function Sprite3invincible () {
         music.beamUp.stop()
     })
 }
-controller.right.onEvent(ControllerButtonEvent.Pressed, function () {
+sprites.onOverlap(SpriteKind.Projectile, SpriteKind.Minion, function (sprite, otherSprite) {
+    music.zapped.play()
+    sprite.destroy()
+    otherSprite.startEffect(effects.warmRadial, 50)
+    statusbars.getStatusBarAttachedTo(StatusBarKind.EnemyHealth, otherSprite).value += -33
+    info.changeScoreBy(41)
+    if (Doublefire && Doublefire.lifespan > 0) {
+        statusbars.getStatusBarAttachedTo(StatusBarKind.EnemyHealth, otherSprite).value += 5.5
+    }
+    if (tripplefire && tripplefire.lifespan > 0) {
+        statusbars.getStatusBarAttachedTo(StatusBarKind.EnemyHealth, otherSprite).value += 4.5
+    }
+})
+controller.left.onEvent(ControllerButtonEvent.Pressed, function () {
     if (inCharacterSelectionMenu) {
         if (currentlyselectedsprite == mySprite) {
-            currentlyselectedsprite = mySprite2
-            music.knock.play()
-        } else if (currentlyselectedsprite == mySprite2) {
             currentlyselectedsprite = mySprite3
             music.knock.play()
-        } else {
-            currentlyselectedsprite = mySprite
+        } else if (currentlyselectedsprite == mySprite3) {
+            currentlyselectedsprite = mySprite2
             music.knock.play()
+        } else {
+            music.knock.play()
+            currentlyselectedsprite = mySprite
         }
     } else {
     	
     }
 })
-sprites.onOverlap(SpriteKind.Player, SpriteKind.Health, function (sprite, otherSprite) {
-    music.powerUp.play()
-    otherSprite.destroy()
-    info.changeLifeBy(1)
+sprites.onOverlap(SpriteKind.Projectile, SpriteKind.Homingminion, function (sprite, otherSprite) {
+    music.zapped.play()
+    sprite.destroy()
+    otherSprite.startEffect(effects.warmRadial, 50)
+    statusbars.getStatusBarAttachedTo(StatusBarKind.homingminionHP, otherSprite).value += -100
+    info.changeScoreBy(75)
 })
-sprites.onOverlap(SpriteKind.Boss2, SpriteKind.Player, function (sprite, otherSprite) {
-    if (Shileded && Shileded.lifespan > 0) {
-    	
-    } else {
-        music.bigCrash.play()
-        scene.cameraShake(5, 1000)
-        info.changeLifeBy(-1)
-        otherSprite.destroy()
+sprites.onOverlap(SpriteKind.Projectile, SpriteKind.Boss, function (sprite, otherSprite) {
+    music.zapped.play()
+    sprite.destroy(effects.warmRadial, 100)
+    statusbars.getStatusBarAttachedTo(StatusBarKind.bosshealth, otherSprite).value += -0.6
+    if (Doublefire && Doublefire.lifespan > 0) {
+        statusbars.getStatusBarAttachedTo(StatusBarKind.bosshealth, otherSprite).value += 0.2
+    }
+    if (tripplefire && tripplefire.lifespan > 0) {
+        statusbars.getStatusBarAttachedTo(StatusBarKind.bosshealth, otherSprite).value += 0.2
     }
 })
-statusbars.onStatusReached(StatusBarKind.bosshealth, statusbars.StatusComparison.LTE, statusbars.ComparisonType.Percentage, 70, function (status) {
-    boss1.setVelocity(70, 0)
-})
-sprites.onOverlap(SpriteKind.Player, SpriteKind.Minion, function (sprite, otherSprite) {
+sprites.onOverlap(SpriteKind.Bossshot, SpriteKind.Player, function (sprite, otherSprite) {
     if (Shileded && Shileded.lifespan > 0) {
-        enemyDeath(otherSprite)
-    } else {
-        music.bigCrash.play()
-        info.changeLifeBy(-1)
-        enemyDeath(otherSprite)
         sprite.destroy()
-        scene.cameraShake(4, 500)
+    } else {
+        scene.cameraShake(3, 500)
+        music.smallCrash.play()
+        sprite.destroy()
+        otherSprite.destroy()
+        info.changeLifeBy(-1)
         if (Doublefire && Doublefire.lifespan > 0) {
             Doublefire.lifespan = 0
         }
@@ -1735,22 +1838,6 @@ function Sprite3movement (mySprite: Sprite) {
         `, SpriteKind.Projectiletimer)
     Sprite3_Projectile.lifespan = 999999
 }
-sprites.onOverlap(SpriteKind.Enemyshot, SpriteKind.Player, function (sprite, otherSprite) {
-    if (Shileded && Shileded.lifespan > 0) {
-        sprite.destroy()
-    } else {
-        music.smallCrash.play()
-        sprite.destroy()
-        otherSprite.destroy()
-        info.changeLifeBy(-1)
-        if (Doublefire && Doublefire.lifespan > 0) {
-            Doublefire.lifespan = 0
-        }
-        if (tripplefire && tripplefire.lifespan > 0) {
-            tripplefire.lifespan = 0
-        }
-    }
-})
 function startlevel () {
     music.setVolume(20)
     color.startFade(color.Black, color.originalPalette)
@@ -1876,7 +1963,7 @@ function startlevel () {
         ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
         ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
         `)
-    info.setLife(4)
+    info.setLife(10)
     effects.starField.startScreenEffect()
     enemySpeed = 3
     spawntime()
@@ -2025,70 +2112,87 @@ function startlevel () {
         })
     })
 }
-statusbars.onZero(StatusBarKind.poweruphealth, function (status) {
-    Powerupdeath(status.spriteAttachedTo())
-})
-sprites.onOverlap(SpriteKind.Projectile, SpriteKind.Enemy2, function (sprite, otherSprite) {
+sprites.onOverlap(SpriteKind.Projectile, SpriteKind.Minion2, function (sprite, otherSprite) {
     music.zapped.play()
     sprite.destroy()
     otherSprite.startEffect(effects.warmRadial, 50)
-    statusbars.getStatusBarAttachedTo(StatusBarKind.bigenemyhealth2, otherSprite).value += -3.5
-    info.changeScoreBy(25)
+    statusbars.getStatusBarAttachedTo(StatusBarKind.poweruphealth, otherSprite).value += -50
+    info.changeScoreBy(500)
     if (Doublefire && Doublefire.lifespan > 0) {
-        statusbars.getStatusBarAttachedTo(StatusBarKind.bigenemyhealth2, otherSprite).value += 1
+        statusbars.getStatusBarAttachedTo(StatusBarKind.poweruphealth, otherSprite).value += 10
     }
     if (tripplefire && tripplefire.lifespan > 0) {
-        statusbars.getStatusBarAttachedTo(StatusBarKind.bigenemyhealth2, otherSprite).value += 1
+        statusbars.getStatusBarAttachedTo(StatusBarKind.poweruphealth, otherSprite).value += 7
     }
 })
-statusbars.onStatusReached(StatusBarKind.bosshealth, statusbars.StatusComparison.LTE, statusbars.ComparisonType.Percentage, 32, function (status) {
-    boss1.setVelocity(70, randint(20, 40))
-    timer.after(4000, function () {
-        animation.runMovementAnimation(
-        boss1,
-        animation.animationPresets(animation.easeUp),
-        2000,
-        false
-        )
-        boss1.setVelocity(90, 0)
-    })
-})
-info.onLifeZero(function () {
-    game.over(false)
-})
-controller.A.onEvent(ControllerButtonEvent.Repeated, function () {
-    if (sprites.allOfKind(SpriteKind.Bomb).length > 0) {
-        music.beamUp.play()
-        Shileded = sprites.create(img`
-            . . . . . . . . . . . . . . . . . . . . . . 1 . . . 1 . . . . 
-            1 . . . . . . . . . . 1 . . . . . . . . 1 . 1 . . . 1 . . . . 
-            . . . . . . . . . . . . . . . . . . . . . . 1 . . . 1 . 1 1 1 
-            1 . 1 1 1 . 1 . . 1 . 1 . 1 1 1 . 1 1 . 1 . 1 1 1 . 1 . 1 1 1 
-            1 . 1 . 1 . . 1 . 1 . 1 . 1 . 1 . 1 . . 1 . 1 . 1 . 1 . 1 . . 
-            1 . 1 . 1 . . . 1 . . 1 . 1 . 1 . 1 1 . 1 . 1 1 1 . 1 . 1 1 1 
-            `, SpriteKind.Armor)
-        Shileded.setPosition(18, 15)
-        Shileded.lifespan = 3000
-        bonus = sprites.allOfKind(SpriteKind.Bomb).shift()
-        bonus.lifespan = 0
-        bonus.destroy()
-    }
-})
-sprites.onOverlap(SpriteKind.Player, SpriteKind.Enemy2, function (sprite, otherSprite) {
-    if (Shileded && Shileded.lifespan > 0) {
-        callbigenemy2death(otherSprite)
+controller.right.onEvent(ControllerButtonEvent.Pressed, function () {
+    if (inCharacterSelectionMenu) {
+        if (currentlyselectedsprite == mySprite) {
+            currentlyselectedsprite = mySprite2
+            music.knock.play()
+        } else if (currentlyselectedsprite == mySprite2) {
+            currentlyselectedsprite = mySprite3
+            music.knock.play()
+        } else {
+            currentlyselectedsprite = mySprite
+            music.knock.play()
+        }
     } else {
-        music.bigCrash.play()
-        info.changeLifeBy(-1)
-        callbigenemy2death(otherSprite)
+    	
+    }
+})
+sprites.onOverlap(SpriteKind.Enemyshot, SpriteKind.Player, function (sprite, otherSprite) {
+    if (Shileded && Shileded.lifespan > 0) {
         sprite.destroy()
-        scene.cameraShake(4, 500)
+    } else {
+        music.smallCrash.play()
+        sprite.destroy()
+        otherSprite.destroy()
+        info.changeLifeBy(-1)
         if (Doublefire && Doublefire.lifespan > 0) {
             Doublefire.lifespan = 0
         }
         if (tripplefire && tripplefire.lifespan > 0) {
             tripplefire.lifespan = 0
         }
+    }
+})
+statusbars.onZero(StatusBarKind.bosshealth, function (status) {
+    boss1.destroy(effects.halo, 1000)
+    info.changeScoreBy(50000)
+    music.powerDown.stop()
+    bossfiretime.lifespan = 0
+    bossfiretime.lifespan += -999999
+    if (Math.percentChance(100)) {
+        Life = sprites.create(img`
+            . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . 
+            . . . 2 2 2 . . . 2 2 2 . . . 
+            . . 2 2 2 2 2 . 2 2 2 2 2 . . 
+            . 2 2 2 2 1 2 2 2 1 2 2 2 2 . 
+            . 2 2 2 2 1 2 2 2 1 2 2 2 2 . 
+            . 2 2 2 2 1 1 1 1 1 2 2 2 2 . 
+            . . 2 2 2 1 2 2 2 1 2 2 2 . . 
+            . . . 2 2 1 2 2 2 1 2 2 . . . 
+            . . . . 2 2 2 2 2 2 2 . . . . 
+            . . . . . 2 2 2 2 2 . . . . . 
+            . . . . . . 2 2 2 . . . . . . 
+            . . . . . . . 2 . . . . . . . 
+            . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . 
+            `, SpriteKind.Health)
+        characterAnimations.loopFrames(
+        Life,
+        assets.animation`myAnim13`,
+        500,
+        characterAnimations.rule(Predicate.Moving)
+        )
+        Life.x = boss1.x
+        Life.y = boss1.y
+        Life.lifespan = 25000
+        Life.setVelocity(randint(-40, 40), randint(-40, 40))
+        Life.setFlag(SpriteFlag.BounceOnWall, true)
     }
 })
 function Powerupdeath (powerupenemy: Sprite) {
@@ -2106,6 +2210,21 @@ function Powerupdeath (powerupenemy: Sprite) {
     shield.setVelocity(100, randint(-40, 48))
     shield.setFlag(SpriteFlag.BounceOnWall, true)
 }
+statusbars.onZero(StatusBarKind.EnemyHealth, function (status) {
+    enemyDeath(status.spriteAttachedTo())
+})
+statusbars.onStatusReached(StatusBarKind.bosshealth, statusbars.StatusComparison.LTE, statusbars.ComparisonType.Percentage, 32, function (status) {
+    boss1.setVelocity(70, randint(20, 40))
+    timer.after(4000, function () {
+        animation.runMovementAnimation(
+        boss1,
+        animation.animationPresets(animation.easeUp),
+        2000,
+        false
+        )
+        boss1.setVelocity(90, 0)
+    })
+})
 function callbigenemy2death (bigenemy2: Sprite) {
     bigenemy2.destroy(effects.disintegrate, 500)
     enemyfiretime2.lifespan = 0
@@ -2174,190 +2293,53 @@ function callbigenemy2death (bigenemy2: Sprite) {
         powerup2activate = true
     }
 }
-sprites.onOverlap(SpriteKind.Boss2shot, SpriteKind.Player, function (sprite, otherSprite) {
-    if (Shileded && Shileded.lifespan > 0) {
-        sprite.destroy()
-    } else {
-        music.smallCrash.play()
-        scene.cameraShake(3, 500)
-        otherSprite.destroy()
-        sprite.destroy()
-        info.changeLifeBy(-1)
-        if (Doublefire && Doublefire.lifespan > 0) {
-            Doublefire.lifespan = 0
-        }
-        if (tripplefire && tripplefire.lifespan > 0) {
-            tripplefire.lifespan = 0
-        }
-    }
-})
-sprites.onOverlap(SpriteKind.Enemyshot2, SpriteKind.Player, function (sprite, otherSprite) {
-    if (Shileded && Shileded.lifespan > 0) {
-        sprite.destroy()
-    } else {
-        otherSprite.destroy()
-        music.smallCrash.play()
-        sprite.destroy()
-        info.changeLifeBy(-1)
-        if (Doublefire && Doublefire.lifespan > 0) {
-            Doublefire.lifespan = 0
-        }
-        if (tripplefire && tripplefire.lifespan > 0) {
-            tripplefire.lifespan = 0
-        }
-    }
-})
-statusbars.onStatusReached(StatusBarKind.boss2health, statusbars.StatusComparison.LTE, statusbars.ComparisonType.Percentage, 50, function (status) {
-    if (Math.percentChance(100)) {
-        boss2.setVelocity(80, randint(40, 80))
+statusbars.onStatusReached(StatusBarKind.boss2health, statusbars.StatusComparison.LTE, statusbars.ComparisonType.Percentage, 30, function (status) {
+    boss2.setVelocity(80, randint(40, 80))
+    timer.after(1000, function () {
+        animation.runMovementAnimation(
+        boss2,
+        animation.animationPresets(animation.easeUp),
+        1000,
+        false
+        )
+        boss2.y = 25
+        boss2.setVelocity(80, 0)
         timer.after(3000, function () {
             animation.runMovementAnimation(
             boss2,
-            animation.animationPresets(animation.easeUp),
-            1000,
+            animation.animationPresets(animation.flyToCenter),
+            2000,
             false
             )
-            boss2.y = 25
-            boss2.setVelocity(80, 0)
+            timer.after(3000, function () {
+                animation.runMovementAnimation(
+                boss2,
+                animation.animationPresets(animation.easeUp),
+                2000,
+                false
+                )
+                boss2.y = 25
+                boss2.setVelocity(80, 0)
+            })
         })
-    }
+    })
 })
-statusbars.onZero(StatusBarKind.homingminionHP, function (status) {
-    enemyDeath(status.spriteAttachedTo())
-})
-sprites.onDestroyed(SpriteKind.Player, function (sprite) {
-    if (Doublefire && Doublefire.lifespan > 0) {
-        Doublefire.lifespan = 0
-    }
-    if (tripplefire && tripplefire.lifespan > 0) {
-        tripplefire.lifespan = 0
-    }
-    if (Sprite1_Projectile && Sprite1_Projectile.lifespan > 0) {
-        mySprite = sprites.create(assets.image`myImage2`, SpriteKind.Player)
-        invincible(mySprite)
-        mySprite.y = 120
-        Movement(mySprite)
-        mySprite.setStayInScreen(true)
-        controller.moveSprite(mySprite, 120, 120)
-        mySprite.setFlag(SpriteFlag.Invisible, true)
-        timer.after(500, function () {
-            mySprite.setFlag(SpriteFlag.Invisible, false)
-            timer.after(500, function () {
-                mySprite.setFlag(SpriteFlag.Invisible, true)
-                timer.after(500, function () {
-                    mySprite.setFlag(SpriteFlag.Invisible, false)
-                })
-            })
-        })
-    }
-    if (Sprite2_projetile && Sprite2_projetile.lifespan > 0) {
-        mySprite2 = sprites.create(assets.image`myImage1`, SpriteKind.Player)
-        invincible(mySprite)
-        mySprite2.y = 120
-        Sprite2movement()
-        mySprite2.setStayInScreen(true)
-        controller.moveSprite(mySprite2, 120, 120)
-        mySprite2.setFlag(SpriteFlag.Invisible, true)
-        timer.after(500, function () {
-            mySprite2.setFlag(SpriteFlag.Invisible, false)
-            timer.after(500, function () {
-                mySprite2.setFlag(SpriteFlag.Invisible, true)
-                timer.after(500, function () {
-                    mySprite2.setFlag(SpriteFlag.Invisible, false)
-                })
-            })
-        })
-    }
-    if (Sprite3_Projectile && Sprite3_Projectile.lifespan > 0) {
-        mySprite3 = sprites.create(img`
-            . . . . . . . . . . 
-            . . . . 2 2 . . . . 
-            . . . 2 2 2 2 . . . 
-            . . 2 2 1 1 2 2 . . 
-            . . 2 1 4 4 1 2 . . 
-            . 2 2 4 2 2 4 2 2 . 
-            2 2 2 4 2 2 4 2 2 2 
-            5 5 5 4 2 2 4 5 5 5 
-            2 2 2 4 1 1 4 2 2 2 
-            . . . 2 2 2 2 . . . 
-            . . . . 5 5 . . . . 
-            `, SpriteKind.Player)
-        mySprite3.y = 120
-        Sprite3invincible()
-        mySprite3.setStayInScreen(true)
-        controller.moveSprite(mySprite3, 90, 90)
-        Sprite3movement(mySprite)
-        mySprite3.setFlag(SpriteFlag.Invisible, true)
-        timer.after(500, function () {
-            mySprite3.setFlag(SpriteFlag.Invisible, false)
-            timer.after(500, function () {
-                mySprite3.setFlag(SpriteFlag.Invisible, true)
-                timer.after(500, function () {
-                    mySprite3.setFlag(SpriteFlag.Invisible, false)
-                })
-            })
-        })
-    }
-    if (Math.percentChance(50)) {
-        powerup = sprites.create(img`
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . 9 9 9 9 9 9 . . . . . 
-            . . . 6 9 9 1 1 1 1 9 9 6 . . . 
-            . . . 6 9 9 1 9 9 1 9 9 6 . . . 
-            . . . 6 9 9 1 1 1 1 9 9 6 . . . 
-            . . . 6 9 9 1 9 9 9 9 9 6 . . . 
-            . . . 6 9 9 1 9 9 9 9 9 6 . . . 
-            . . . . . 9 9 9 9 9 9 . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            `, SpriteKind.PowerUP)
-        characterAnimations.loopFrames(
-        powerup,
-        assets.animation`myAnim10`,
-        200,
-        characterAnimations.rule(Predicate.Moving)
-        )
-        powerup.lifespan = 10000
-        powerup.setVelocity(100, randint(-40, 60))
-        powerup.setFlag(SpriteFlag.BounceOnWall, true)
+sprites.onOverlap(SpriteKind.Player, SpriteKind.Homingminion, function (sprite, otherSprite) {
+    if (Shileded && Shileded.lifespan > 0) {
+        enemyDeath(otherSprite)
     } else {
-        powerup2 = sprites.create(img`
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . 6 6 6 6 6 6 . . . . . 
-            . . . c 6 6 1 1 1 1 6 6 c . . . 
-            . . . c 6 6 1 6 6 1 6 6 c . . . 
-            . . . c 6 6 1 1 1 1 6 6 c . . . 
-            . . . c 6 6 1 6 6 6 6 6 c . . . 
-            . . . c 6 6 1 6 6 6 6 6 c . . . 
-            . . . . . 6 6 6 6 6 6 . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            `, SpriteKind.Powerup2)
-        characterAnimations.loopFrames(
-        powerup2,
-        assets.animation`myAnim15`,
-        200,
-        characterAnimations.rule(Predicate.Moving)
-        )
-        powerup2.lifespan = 10000
-        powerup2.setVelocity(100, randint(-40, 60))
-        powerup2.setFlag(SpriteFlag.BounceOnWall, true)
+        music.bigCrash.play()
+        info.changeLifeBy(-1)
+        sprite.destroy()
+        enemyDeath(otherSprite)
+        scene.cameraShake(4, 500)
+        if (Doublefire && Doublefire.lifespan > 0) {
+            Doublefire.lifespan = 0
+        }
+        if (tripplefire && tripplefire.lifespan > 0) {
+            tripplefire.lifespan = 0
+        }
     }
-})
-statusbars.onZero(StatusBarKind.Bigenemyhealth, function (status) {
-    bigenemydeath(status.spriteAttachedTo())
 })
 sprites.onOverlap(SpriteKind.Player, SpriteKind.Shield, function (sprite, otherSprite) {
     music.powerUp.play()
@@ -2389,6 +2371,51 @@ sprites.onOverlap(SpriteKind.Player, SpriteKind.Shield, function (sprite, otherS
     )
     bonus.setPosition(10, 108)
     bonus.lifespan = 999999999
+})
+sprites.onOverlap(SpriteKind.Projectile, SpriteKind.Enemy, function (sprite, otherSprite) {
+    music.zapped.play()
+    sprite.destroy()
+    otherSprite.startEffect(effects.warmRadial, 50)
+    statusbars.getStatusBarAttachedTo(StatusBarKind.Bigenemyhealth, otherSprite).value += -3.5
+    info.changeScoreBy(25)
+    if (Doublefire && Doublefire.lifespan > 0) {
+        statusbars.getStatusBarAttachedTo(StatusBarKind.Bigenemyhealth, otherSprite).value += 1
+    }
+    if (tripplefire && tripplefire.lifespan > 0) {
+        statusbars.getStatusBarAttachedTo(StatusBarKind.Bigenemyhealth, otherSprite).value += 1
+    }
+})
+statusbars.onZero(StatusBarKind.poweruphealth, function (status) {
+    Powerupdeath(status.spriteAttachedTo())
+})
+sprites.onOverlap(SpriteKind.Enemyshot2, SpriteKind.Player, function (sprite, otherSprite) {
+    if (Shileded && Shileded.lifespan > 0) {
+        sprite.destroy()
+    } else {
+        otherSprite.destroy()
+        music.smallCrash.play()
+        sprite.destroy()
+        info.changeLifeBy(-1)
+        if (Doublefire && Doublefire.lifespan > 0) {
+            Doublefire.lifespan = 0
+        }
+        if (tripplefire && tripplefire.lifespan > 0) {
+            tripplefire.lifespan = 0
+        }
+    }
+})
+sprites.onOverlap(SpriteKind.Projectile, SpriteKind.Enemy2, function (sprite, otherSprite) {
+    music.zapped.play()
+    sprite.destroy()
+    otherSprite.startEffect(effects.warmRadial, 50)
+    statusbars.getStatusBarAttachedTo(StatusBarKind.bigenemyhealth2, otherSprite).value += -3.5
+    info.changeScoreBy(25)
+    if (Doublefire && Doublefire.lifespan > 0) {
+        statusbars.getStatusBarAttachedTo(StatusBarKind.bigenemyhealth2, otherSprite).value += 1
+    }
+    if (tripplefire && tripplefire.lifespan > 0) {
+        statusbars.getStatusBarAttachedTo(StatusBarKind.bigenemyhealth2, otherSprite).value += 1
+    }
 })
 function Sprite2movement () {
     characterAnimations.loopFrames(
@@ -2539,110 +2566,79 @@ function Sprite2movement () {
         `, SpriteKind.Projectiletimer)
     Sprite2_projetile.lifespan = 999999
 }
-sprites.onOverlap(SpriteKind.Player, SpriteKind.PowerUP, function (sprite, otherSprite) {
-    otherSprite.destroy()
-    if (Doublefire && Doublefire.lifespan == 0) {
-        powerup.destroy()
-        powerup.lifespan = 0
-        music.powerUp.play()
-        info.changeScoreBy(1000)
-        powerupactivate = false
-    } else {
-        music.powerUp.play()
-        otherSprite.destroy()
-        Doublefire = sprites.create(img`
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . 9 . . . . . . . . . 
-            . . . . . 9 9 9 . . . . . . . . 
-            . . . . . 9 9 9 . . . . . . . . 
-            . . . . . 9 9 9 . . . . . . . . 
-            . . . . . 9 . 9 . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            `, SpriteKind.Mode)
-        Doublefire.setPosition(149, 108)
-        Doublefire.lifespan = 9999999
-        info.changeScoreBy(1000)
-        powerupactivate = false
+statusbars.onZero(StatusBarKind.boss2health, function (status) {
+    boss2.destroy(effects.fountain, 1000)
+    info.changeScoreBy(50000)
+    music.powerDown.stop()
+    Bossfiretime2.lifespan = 0
+    Bossfiretime2.lifespan += -999999
+    if (Math.percentChance(100)) {
+        Life = sprites.create(img`
+            . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . 
+            . . . 2 2 2 . . . 2 2 2 . . . 
+            . . 2 2 2 2 2 . 2 2 2 2 2 . . 
+            . 2 2 2 2 1 2 2 2 1 2 2 2 2 . 
+            . 2 2 2 2 1 2 2 2 1 2 2 2 2 . 
+            . 2 2 2 2 1 1 1 1 1 2 2 2 2 . 
+            . . 2 2 2 1 2 2 2 1 2 2 2 . . 
+            . . . 2 2 1 2 2 2 1 2 2 . . . 
+            . . . . 2 2 2 2 2 2 2 . . . . 
+            . . . . . 2 2 2 2 2 . . . . . 
+            . . . . . . 2 2 2 . . . . . . 
+            . . . . . . . 2 . . . . . . . 
+            . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . 
+            `, SpriteKind.Health)
+        characterAnimations.loopFrames(
+        Life,
+        assets.animation`myAnim13`,
+        500,
+        characterAnimations.rule(Predicate.Moving)
+        )
+        Life.x = boss2.x
+        Life.y = boss2.y
+        Life.lifespan = 25000
+        Life.setVelocity(randint(-40, 40), randint(-40, 40))
+        Life.setFlag(SpriteFlag.BounceOnWall, true)
     }
 })
-sprites.onOverlap(SpriteKind.Projectile, SpriteKind.Enemy, function (sprite, otherSprite) {
-    music.zapped.play()
-    sprite.destroy()
-    otherSprite.startEffect(effects.warmRadial, 50)
-    statusbars.getStatusBarAttachedTo(StatusBarKind.Bigenemyhealth, otherSprite).value += -3.5
-    info.changeScoreBy(25)
-    if (Doublefire && Doublefire.lifespan > 0) {
-        statusbars.getStatusBarAttachedTo(StatusBarKind.Bigenemyhealth, otherSprite).value += 1
-    }
-    if (tripplefire && tripplefire.lifespan > 0) {
-        statusbars.getStatusBarAttachedTo(StatusBarKind.Bigenemyhealth, otherSprite).value += 1
-    }
-})
-sprites.onOverlap(SpriteKind.Player, SpriteKind.Enemy, function (sprite, otherSprite) {
-    if (Shileded && Shileded.lifespan > 0) {
-        bigenemydeath(otherSprite)
-    } else {
-        music.bigCrash.play()
-        info.changeLifeBy(-1)
-        bigenemydeath(otherSprite)
-        sprite.destroy()
-        scene.cameraShake(4, 500)
-        if (Doublefire && Doublefire.lifespan > 0) {
-            Doublefire.lifespan = 0
-        }
-        if (tripplefire && tripplefire.lifespan > 0) {
-            tripplefire.lifespan = 0
-        }
-    }
-})
+let choose = 0
+let projectile: Sprite = null
+let movinf = false
 let bigstatusbar2: StatusBarSprite = null
-let bigstatusbar: StatusBarSprite = null
 let _1shotenemyfire: Sprite = null
 let minion: Sprite = null
+let bigstatusbar: StatusBarSprite = null
 let statusbar2: StatusBarSprite = null
-let movinf = false
 let enemyversion2: Sprite = null
 let enemyfiretime2: Sprite = null
 let shield: Sprite = null
+let Life: Sprite = null
+let bossfiretime: Sprite = null
 let statusbar: StatusBarSprite = null
+let Bossfiretime2: Sprite = null
 let statusbar3: StatusBarSprite = null
 let enemySpeed = 0
-let minion2: Sprite = null
-let Bossfiretime2: Sprite = null
-let bonus: Sprite = null
+let Sprite2_projetile: Sprite = null
+let Fire: Sprite = null
+let boss2: Sprite = null
+let Sprite1_Projectile: Sprite = null
 let minion2spawn = 0
 let Minionspawn = 0
 let Enemy2spawntime = 0
 let EnemySpawnTime = 0
-let Sprite2_projetile: Sprite = null
-let Fire: Sprite = null
-let Sprite1_Projectile: Sprite = null
-let boss2: Sprite = null
-let Life: Sprite = null
-let bossfiretime: Sprite = null
+let minion2: Sprite = null
+let bonus: Sprite = null
 let boss1: Sprite = null
-let powerup2activate = false
-let powerup2: Sprite = null
-let powerupactivate = false
-let Enemy_1: Sprite = null
-let powerup: Sprite = null
-let enemyfiretime: Sprite = null
 let laser: Sprite = null
 let Miniship: Sprite = null
 let does_miniship_exist = false
 let Sprite3_Projectile: Sprite = null
-let tripplefire: Sprite = null
-let Doublefire: Sprite = null
-let Shileded: Sprite = null
+let Enemy_1: Sprite = null
+let enemyfiretime: Sprite = null
+let powerup: Sprite = null
 let selectcharindicator: Sprite = null
 let currentlyselectedsprite: Sprite = null
 let inCharacterSelectionMenu = false
@@ -2650,6 +2646,12 @@ let mySprite3: Sprite = null
 let mySprite2: Sprite = null
 let mySprite: Sprite = null
 let textSprite: TextSprite = null
+let powerup2activate = false
+let powerupactivate = false
+let powerup2: Sprite = null
+let tripplefire: Sprite = null
+let Doublefire: Sprite = null
+let Shileded: Sprite = null
 scene.setBackgroundImage(img`
     ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
     ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
@@ -3514,26 +3516,6 @@ pause(2000)
 game.showLongText("press A to start", DialogLayout.Bottom)
 music.beamUp.play()
 instructions()
-game.onUpdate(function () {
-    if (!(inCharacterSelectionMenu)) {
-        movinf = controller.left.isPressed() || (controller.right.isPressed() || (controller.up.isPressed() || (controller.A.isPressed() || (controller.A.isPressed() || controller.down.isPressed()))))
-    } else {
-        selectcharindicator.setPosition(currentlyselectedsprite.x, currentlyselectedsprite.y - 15)
-    }
-})
-game.onUpdateInterval(12000, function () {
-    enemySpeed += 8
-    enemySpeed = Math.min(enemySpeed, 60)
-    EnemySpawnTime += -500
-    Enemy2spawntime += -500
-    Minionspawn += -850
-    EnemySpawnTime = Math.max(EnemySpawnTime, 5000)
-    EnemySpawnTime = Math.max(Enemy2spawntime, 5000)
-    Minionspawn = Math.max(Minionspawn, 1500)
-})
-forever(function () {
-	
-})
 forever(function () {
     if (inCharacterSelectionMenu) {
         pause(22000)
@@ -3553,10 +3535,11 @@ forever(function () {
             `, SpriteKind.Minion2)
         characterAnimations.loopFrames(
         minion2,
-        assets.animation`myAnim5`,
+        assets.animation`lightning ship`,
         100,
         characterAnimations.rule(Predicate.Moving)
         )
+        minion2.setFlag(SpriteFlag.AutoDestroy, true)
         minion2.startEffect(effects.trail)
         minion2.y = 0
         minion2.vy = 12 + enemySpeed
@@ -3565,84 +3548,6 @@ forever(function () {
         statusbar2.attachToSprite(minion2, 3, 0)
     })
     pause(minion2spawn)
-})
-forever(function () {
-    if (enemyfiretime2 && enemyfiretime2.lifespan > 0) {
-        timer.after(0, function () {
-            enemyfiretime2 = sprites.createProjectileFromSprite(img`
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . 2 2 . . . . . . . 
-                . . . . . . 4 5 5 4 . . . . . . 
-                . . . . . 2 5 5 5 5 2 . . . . . 
-                . . . . . 2 5 5 5 5 2 . . . . . 
-                . . . . . . 4 5 5 4 . . . . . . 
-                . . . . . . . 2 2 . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                `, enemyversion2, 20, 70)
-            enemyfiretime2.setKind(SpriteKind.Enemyshot)
-            enemyfiretime2.lifespan = 100000
-            enemyfiretime2 = sprites.createProjectileFromSprite(img`
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . 2 2 . . . . . . . 
-                . . . . . . 4 5 5 4 . . . . . . 
-                . . . . . 2 5 5 5 5 2 . . . . . 
-                . . . . . 2 5 5 5 5 2 . . . . . 
-                . . . . . . 4 5 5 4 . . . . . . 
-                . . . . . . . 2 2 . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                `, enemyversion2, -20, 70)
-            enemyfiretime2.setKind(SpriteKind.Enemyshot2)
-            enemyfiretime2.lifespan = 100000
-            enemyfiretime2.setFlag(SpriteFlag.AutoDestroy, true)
-        })
-    }
-    pause(3500)
-})
-forever(function () {
-    if (bossfiretime && bossfiretime.lifespan > 0) {
-        Enemy_1.destroy()
-        minion.destroy()
-        enemyversion2.destroy()
-        _1shotenemyfire.destroy()
-        if (enemyfiretime && enemyfiretime.lifespan > 0) {
-            enemyfiretime2.lifespan = 0
-            enemyfiretime.lifespan = 0
-        }
-        if (enemyfiretime2 && enemyfiretime2.lifespan > 0) {
-            enemyfiretime2.lifespan = 0
-            enemyfiretime.lifespan = 0
-        }
-    }
-    if (Bossfiretime2 && Bossfiretime2.lifespan > 0) {
-        Enemy_1.destroy()
-        minion.destroy()
-        enemyversion2.destroy()
-        _1shotenemyfire.destroy()
-        if (enemyfiretime && enemyfiretime.lifespan > 0) {
-            enemyfiretime2.lifespan = 0
-            enemyfiretime.lifespan = 0
-        }
-        if (enemyfiretime2 && enemyfiretime2.lifespan > 0) {
-            enemyfiretime2.lifespan = 0
-            enemyfiretime.lifespan = 0
-        }
-    }
 })
 forever(function () {
     if (inCharacterSelectionMenu) {
@@ -3698,6 +3603,7 @@ forever(function () {
         300,
         characterAnimations.rule(Predicate.NotMoving)
         )
+        Enemy_1.setFlag(SpriteFlag.AutoDestroy, true)
         if (Math.percentChance(50)) {
             story.spriteMoveToLocation(Enemy_1, 18, 23, 50)
         } else {
@@ -3716,641 +3622,6 @@ forever(function () {
         })
     })
     pause(EnemySpawnTime)
-})
-forever(function () {
-    if (Bossfiretime2 && Bossfiretime2.lifespan > 0) {
-        Bossfiretime2 = sprites.createProjectileFromSprite(img`
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            .......11.......
-            `, boss2, 0, 5000)
-        timer.after(1000, function () {
-            Bossfiretime2 = sprites.createProjectileFromSprite(img`
-                2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                `, boss2, 0, 100)
-            Bossfiretime2.setKind(SpriteKind.Boss2shot)
-            Bossfiretime2.lifespan = 95000
-            timer.after(100, function () {
-                Bossfiretime2 = sprites.createProjectileFromSprite(img`
-                    2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                    2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                    2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                    2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                    2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                    2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                    2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                    2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                    2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                    2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                    2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                    2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                    2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                    2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                    2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                    2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                    `, boss2, 0, 100)
-                Bossfiretime2.setKind(SpriteKind.Boss2shot)
-                Bossfiretime2.lifespan = 95000
-                timer.after(100, function () {
-                    Bossfiretime2 = sprites.createProjectileFromSprite(img`
-                        2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                        2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                        2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                        2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                        2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                        2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                        2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                        2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                        2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                        2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                        2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                        2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                        2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                        2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                        2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                        2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                        `, boss2, 0, 100)
-                    Bossfiretime2.setKind(SpriteKind.Boss2shot)
-                    Bossfiretime2.lifespan = 95000
-                    timer.after(100, function () {
-                        Bossfiretime2 = sprites.createProjectileFromSprite(img`
-                            2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                            2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                            2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                            2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                            2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                            2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                            2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                            2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                            2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                            2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                            2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                            2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                            2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                            2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                            2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                            2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                            `, boss2, 0, 100)
-                        Bossfiretime2.setKind(SpriteKind.Boss2shot)
-                        Bossfiretime2.lifespan = 95000
-                        timer.after(100, function () {
-                            Bossfiretime2 = sprites.createProjectileFromSprite(img`
-                                2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                                2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                                2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                                2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                                2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                                2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                                2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                                2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                                2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                                2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                                2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                                2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                                2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                                2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                                2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                                2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                                `, boss2, 0, 100)
-                            Bossfiretime2.setKind(SpriteKind.Boss2shot)
-                            Bossfiretime2.lifespan = 95000
-                            timer.after(100, function () {
-                                Bossfiretime2 = sprites.createProjectileFromSprite(img`
-                                    2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                                    2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                                    2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                                    2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                                    2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                                    2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                                    2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                                    2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                                    2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                                    2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                                    2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                                    2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                                    2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                                    2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                                    2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                                    2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                                    `, boss2, 0, 100)
-                                Bossfiretime2.setKind(SpriteKind.Boss2shot)
-                                Bossfiretime2.lifespan = 95000
-                                timer.after(100, function () {
-                                    Bossfiretime2 = sprites.createProjectileFromSprite(img`
-                                        2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                                        2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                                        2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                                        2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                                        2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                                        2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                                        2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                                        2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                                        2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                                        2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                                        2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                                        2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                                        2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                                        2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                                        2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                                        2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
-                                        `, boss2, 0, 200)
-                                    Bossfiretime2.setKind(SpriteKind.Boss2shot)
-                                    Bossfiretime2.lifespan = 95000
-                                })
-                            })
-                        })
-                    })
-                })
-            })
-        })
-    }
-    pause(4000)
-})
-forever(function () {
-    if (Bossfiretime2 && Bossfiretime2.lifespan > 0) {
-        Bossfiretime2 = sprites.createProjectileFromSprite(img`
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . 4 4 . . . . . . . 
-            . . . . . . 4 5 5 4 . . . . . . 
-            . . . . . . 2 5 5 2 . . . . . . 
-            . . . . . . . 2 2 . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            `, boss2, 30, 65)
-        Bossfiretime2.setKind(SpriteKind.Boss2shot)
-        Bossfiretime2.lifespan = 95000
-        Bossfiretime2 = sprites.createProjectileFromSprite(img`
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . 4 4 . . . . . . . 
-            . . . . . . 4 5 5 4 . . . . . . 
-            . . . . . . 2 5 5 2 . . . . . . 
-            . . . . . . . 2 2 . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            `, boss2, -30, 65)
-        Bossfiretime2.setKind(SpriteKind.Boss2shot)
-        Bossfiretime2.lifespan = 95000
-        Bossfiretime2 = sprites.createProjectileFromSprite(img`
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . 4 4 . . . . . . . 
-            . . . . . . 4 5 5 4 . . . . . . 
-            . . . . . . 2 5 5 2 . . . . . . 
-            . . . . . . . 2 2 . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            `, boss2, 90, 65)
-        Bossfiretime2.setKind(SpriteKind.Boss2shot)
-        Bossfiretime2.lifespan = 95000
-        Bossfiretime2 = sprites.createProjectileFromSprite(img`
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . 4 4 . . . . . . . 
-            . . . . . . 4 5 5 4 . . . . . . 
-            . . . . . . 2 5 5 2 . . . . . . 
-            . . . . . . . 2 2 . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            `, boss2, -90, 65)
-        Bossfiretime2.setKind(SpriteKind.Boss2shot)
-        Bossfiretime2.lifespan = 95000
-        Bossfiretime2 = sprites.createProjectileFromSprite(img`
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . 4 4 . . . . . . . 
-            . . . . . . 4 5 5 4 . . . . . . 
-            . . . . . . 2 5 5 2 . . . . . . 
-            . . . . . . . 2 2 . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            `, boss2, 60, 65)
-        Bossfiretime2.setKind(SpriteKind.Boss2shot)
-        Bossfiretime2.lifespan = 95000
-        Bossfiretime2 = sprites.createProjectileFromSprite(img`
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . 4 4 . . . . . . . 
-            . . . . . . 4 5 5 4 . . . . . . 
-            . . . . . . 2 5 5 2 . . . . . . 
-            . . . . . . . 2 2 . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            `, boss2, -60, 65)
-        Bossfiretime2.setKind(SpriteKind.Boss2shot)
-        Bossfiretime2.lifespan = 95000
-    }
-    timer.after(100, function () {
-        if (Bossfiretime2 && Bossfiretime2.lifespan > 0) {
-            Bossfiretime2 = sprites.createProjectileFromSprite(img`
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . 4 4 . . . . . . . 
-                . . . . . . 4 5 5 4 . . . . . . 
-                . . . . . . 2 5 5 2 . . . . . . 
-                . . . . . . . 2 2 . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                `, boss2, 30, 65)
-            Bossfiretime2.setKind(SpriteKind.Boss2shot)
-            Bossfiretime2.lifespan = 95000
-            Bossfiretime2 = sprites.createProjectileFromSprite(img`
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . 4 4 . . . . . . . 
-                . . . . . . 4 5 5 4 . . . . . . 
-                . . . . . . 2 5 5 2 . . . . . . 
-                . . . . . . . 2 2 . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                `, boss2, -30, 65)
-            Bossfiretime2.setKind(SpriteKind.Boss2shot)
-            Bossfiretime2.lifespan = 95000
-            Bossfiretime2 = sprites.createProjectileFromSprite(img`
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . 4 4 . . . . . . . 
-                . . . . . . 4 5 5 4 . . . . . . 
-                . . . . . . 2 5 5 2 . . . . . . 
-                . . . . . . . 2 2 . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                `, boss2, 90, 65)
-            Bossfiretime2.setKind(SpriteKind.Boss2shot)
-            Bossfiretime2.lifespan = 95000
-            Bossfiretime2 = sprites.createProjectileFromSprite(img`
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . 4 4 . . . . . . . 
-                . . . . . . 4 5 5 4 . . . . . . 
-                . . . . . . 2 5 5 2 . . . . . . 
-                . . . . . . . 2 2 . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                `, boss2, -90, 65)
-            Bossfiretime2.setKind(SpriteKind.Boss2shot)
-            Bossfiretime2.lifespan = 95000
-            Bossfiretime2 = sprites.createProjectileFromSprite(img`
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . 4 4 . . . . . . . 
-                . . . . . . 4 5 5 4 . . . . . . 
-                . . . . . . 2 5 5 2 . . . . . . 
-                . . . . . . . 2 2 . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                `, boss2, 60, 65)
-            Bossfiretime2.setKind(SpriteKind.Boss2shot)
-            Bossfiretime2.lifespan = 95000
-            Bossfiretime2 = sprites.createProjectileFromSprite(img`
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . 4 4 . . . . . . . 
-                . . . . . . 4 5 5 4 . . . . . . 
-                . . . . . . 2 5 5 2 . . . . . . 
-                . . . . . . . 2 2 . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                `, boss2, -60, 65)
-            Bossfiretime2.setKind(SpriteKind.Boss2shot)
-            Bossfiretime2.lifespan = 95000
-        }
-        timer.after(100, function () {
-            if (Bossfiretime2 && Bossfiretime2.lifespan > 0) {
-                Bossfiretime2 = sprites.createProjectileFromSprite(img`
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . 4 4 . . . . . . . 
-                    . . . . . . 4 5 5 4 . . . . . . 
-                    . . . . . . 2 5 5 2 . . . . . . 
-                    . . . . . . . 2 2 . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    `, boss2, 30, 65)
-                Bossfiretime2.setKind(SpriteKind.Boss2shot)
-                Bossfiretime2.lifespan = 95000
-                Bossfiretime2 = sprites.createProjectileFromSprite(img`
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . 4 4 . . . . . . . 
-                    . . . . . . 4 5 5 4 . . . . . . 
-                    . . . . . . 2 5 5 2 . . . . . . 
-                    . . . . . . . 2 2 . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    `, boss2, -30, 65)
-                Bossfiretime2.setKind(SpriteKind.Boss2shot)
-                Bossfiretime2.lifespan = 95000
-                Bossfiretime2 = sprites.createProjectileFromSprite(img`
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . 4 4 . . . . . . . 
-                    . . . . . . 4 5 5 4 . . . . . . 
-                    . . . . . . 2 5 5 2 . . . . . . 
-                    . . . . . . . 2 2 . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    `, boss2, 90, 65)
-                Bossfiretime2.setKind(SpriteKind.Boss2shot)
-                Bossfiretime2.lifespan = 95000
-                Bossfiretime2 = sprites.createProjectileFromSprite(img`
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . 4 4 . . . . . . . 
-                    . . . . . . 4 5 5 4 . . . . . . 
-                    . . . . . . 2 5 5 2 . . . . . . 
-                    . . . . . . . 2 2 . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    `, boss2, -90, 65)
-                Bossfiretime2.setKind(SpriteKind.Boss2shot)
-                Bossfiretime2.lifespan = 95000
-                Bossfiretime2 = sprites.createProjectileFromSprite(img`
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . 4 4 . . . . . . . 
-                    . . . . . . 4 5 5 4 . . . . . . 
-                    . . . . . . 2 5 5 2 . . . . . . 
-                    . . . . . . . 2 2 . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    `, boss2, 60, 65)
-                Bossfiretime2.setKind(SpriteKind.Boss2shot)
-                Bossfiretime2.lifespan = 95000
-                Bossfiretime2 = sprites.createProjectileFromSprite(img`
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . 4 4 . . . . . . . 
-                    . . . . . . 4 5 5 4 . . . . . . 
-                    . . . . . . 2 5 5 2 . . . . . . 
-                    . . . . . . . 2 2 . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    `, boss2, -60, 65)
-                Bossfiretime2.setKind(SpriteKind.Boss2shot)
-                Bossfiretime2.lifespan = 95000
-                Bossfiretime2.setFlag(SpriteFlag.AutoDestroy, true)
-            }
-        })
-    })
-    pause(1500)
 })
 forever(function () {
     if (inCharacterSelectionMenu) {
@@ -6058,347 +5329,7 @@ forever(function () {
                                 `, SpriteKind.Homingminion)
                             characterAnimations.loopFrames(
                             minion,
-                            [img`
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . 5 5 . . . . . . . 
-                                . . . . . c b c c b c . . . . . 
-                                . . c c c c b c c b c c c c . . 
-                                . . . c c c b c c b c c c . . . 
-                                . . . . c c a c c a c c . . . . 
-                                . . . . . c a a a a c . . . . . 
-                                . . . . . c c a a c c . . . . . 
-                                . . . . . . c c c c . . . . . . 
-                                . . . . . . . c c . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                `,img`
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . 5 5 . . . . . . . 
-                                . . . . . b b c c b b . . . . . 
-                                . . b b b b b c c b b b b b . . 
-                                . . . b b b b c c b b b b . . . 
-                                . . . . b b a c c a b b . . . . 
-                                . . . . . b a a a a b . . . . . 
-                                . . . . . b b a a b b . . . . . 
-                                . . . . . . b b b b . . . . . . 
-                                . . . . . . . b b . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                `,img`
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . 5 5 . . . . . . . 
-                                . . . . . c b c c b c . . . . . 
-                                . . . c c c b c c b c c c c . . 
-                                . . . . c c b c c b c c c . . . 
-                                . . . . c c a c c a c c . . . . 
-                                . . . . . c a a a a c . . . . . 
-                                . . . . . c c a a c c . . . . . 
-                                . . . . . . c c c c . . . . . . 
-                                . . . . . . . c c . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                `,img`
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . 5 5 . . . . . . . 
-                                . . . . . b c c b b b . . . . . 
-                                . . . . b b c c b b b b b . . . 
-                                . . . . b b c c b b b b b . . . 
-                                . . . . . a c c a b b b . . . . 
-                                . . . . . a a a a b b . . . . . 
-                                . . . . . b a a b b b . . . . . 
-                                . . . . . . b b b b . . . . . . 
-                                . . . . . . . b b . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                `,img`
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . 5 5 . . . . . . . 
-                                . . . . . . c c b c c . . . . . 
-                                . . . . . . c c b c c c . . . . 
-                                . . . . . c c c b c c c . . . . 
-                                . . . . . c c c a c c c . . . . 
-                                . . . . . a a a a c c . . . . . 
-                                . . . . . a a a c c c . . . . . 
-                                . . . . . . c c c c . . . . . . 
-                                . . . . . . . c c . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                `,img`
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . 5 5 . . . . . . . 
-                                . . . . . . c c b . c . . . . . 
-                                . . . . . . c . b c c . . . . . 
-                                . . . . . . c c b c c . . . . . 
-                                . . . . . . . c a . c . . . . . 
-                                . . . . . . a a a c . . . . . . 
-                                . . . . . . a . c c c . . . . . 
-                                . . . . . . c c . c . . . . . . 
-                                . . . . . . . c c . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                `,img`
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                `,img`
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . 5 5 . . . . . . . 
-                                . . . . . . c c c . . . . . . . 
-                                . . . . . . c b b b . . . . . . 
-                                . . . . . . b b c b . . . . . . 
-                                . . . . . . c b b c . . . . . . 
-                                . . . . . . a a c c . . . . . . 
-                                . . . . . . a a c c . . . . . . 
-                                . . . . . . c b c . . . . . . . 
-                                . . . . . . . c b . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                `,img`
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                `,img`
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                `,img`
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . 5 5 . . . . . . . 
-                                . . . . . . c . . . . . . . . . 
-                                . . . . . c b c c b . . . . . . 
-                                . . . . . . . b c c . . . . . . 
-                                . . . . . . . b c c . . . . . . 
-                                . . . . . c . c a . . . . . . . 
-                                . . . . . b . . a a . . . . . . 
-                                . . . . . . c c b c . . . . . . 
-                                . . . . . . . c c . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                `,img`
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                `,img`
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                `,img`
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                `,img`
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . 5 5 . . . . . . . 
-                                . . . . . . c c c c . . . . . . 
-                                . . . . . c b c c b . . . . . . 
-                                . . . . . c c b c c . . . . . . 
-                                . . . . . c c b c c . . . . . . 
-                                . . . . . c c c a a . . . . . . 
-                                . . . . . b c c a a . . . . . . 
-                                . . . . . . c c b c . . . . . . 
-                                . . . . . . . c c . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                `,img`
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . 5 5 . . . . . . . 
-                                . . . . . c c b c . . . . . . . 
-                                . . . . c c b b c . . . . . . . 
-                                . . . . b c c b c c . . . . . . 
-                                . . . . c c c a c c . . . . . . 
-                                . . . . . b c a a a . . . . . . 
-                                . . . . . c c c a a . . . . . . 
-                                . . . . . . c c c . . . . . . . 
-                                . . . . . . . c c . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                `,img`
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                `,img`
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . 5 5 . . . . . . . 
-                                . . . . . c c b c c b . . . . . 
-                                . . . c c b c b c c b c . . . . 
-                                . . . b c c c b c c b c . . . . 
-                                . . . . c c c a c c a . . . . . 
-                                . . . . . b c a a a a . . . . . 
-                                . . . . . c c c a a c . . . . . 
-                                . . . . . . c c c b . . . . . . 
-                                . . . . . . . c c . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                `,img`
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . 5 5 . . . . . . . 
-                                . . . . . b b c c b b . . . . . 
-                                . . b b b b b c c b b b c c . . 
-                                . . . b b b b c c b b b b . . . 
-                                . . . . c c a c c a b b . . . . 
-                                . . . . . b a a a a b . . . . . 
-                                . . . . . c b a a b b . . . . . 
-                                . . . . . . b b b b . . . . . . 
-                                . . . . . . . b c . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                `,img`
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . 5 5 . . . . . . . 
-                                . . . . . c b c c b c . . . . . 
-                                . . c c c c b c c b c c c c . . 
-                                . . . c c c b c c b c c c . . . 
-                                . . . . c c a c c a c c . . . . 
-                                . . . . . c a a a a c . . . . . 
-                                . . . . . c c a a c c . . . . . 
-                                . . . . . . c c c c . . . . . . 
-                                . . . . . . . c c . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                . . . . . . . . . . . . . . . . 
-                                `],
+                            assets.animation`quntum ship`,
                             100,
                             characterAnimations.rule(Predicate.Moving)
                             )
@@ -6422,6 +5353,127 @@ forever(function () {
         }
     })
     pause(Minionspawn)
+    minion.setFlag(SpriteFlag.AutoDestroy, true)
+})
+forever(function () {
+    if (inCharacterSelectionMenu) {
+        pause(66000)
+    }
+    timer.after(randint(2000, 3000), function () {
+        enemyversion2 = sprites.create(img`
+            ........6....6........
+            .......66699666.......
+            ......6667557666......
+            .....967677776769.....
+            .....667677776766.....
+            ....66176777767166....
+            ...6671761771671766...
+            ...7777161111617777...
+            ...6557766116677556...
+            ...6655776666775566...
+            ....665566..665566....
+            .....66556..65566.....
+            ......6656..6566......
+            .......666..666.......
+            ........66..66........
+            ......................
+            ......................
+            `, SpriteKind.Enemy2)
+        characterAnimations.loopFrames(
+        enemyversion2,
+        assets.animation`myAnim6`,
+        200,
+        characterAnimations.rule(Predicate.Moving)
+        )
+        enemyversion2.setFlag(SpriteFlag.AutoDestroy, true)
+        enemyversion2.y = 0
+        enemyversion2.vy = 2 + enemySpeed
+        enemyversion2.x = randint(0, scene.screenWidth())
+        bigstatusbar2 = statusbars.create(18, 1, StatusBarKind.bigenemyhealth2)
+        bigstatusbar2.attachToSprite(enemyversion2, -1, 0)
+        enemyfiretime2 = sprites.create(img`
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            `, SpriteKind.enemy2firetimer)
+        enemyfiretime2.lifespan = 100000
+        story.spriteMoveToLocation(enemyversion2, 80, randint(12, 20), 20)
+        enemyversion2.setBounceOnWall(true)
+        timer.after(500, function () {
+            story.cancelSpriteMovement(enemyversion2)
+            enemyversion2.setVelocity(8, 0)
+        })
+        timer.after(0, function () {
+            timer.after(30000, function () {
+                enemyversion2.setVelocity(0, 0)
+                enemyversion2.vy = 3 + enemySpeed
+                enemyversion2.setBounceOnWall(false)
+                enemyfiretime.lifespan = 0
+            })
+        })
+    })
+    pause(Enemy2spawntime)
+})
+forever(function () {
+    if (enemyfiretime2 && enemyfiretime2.lifespan > 0) {
+        timer.after(0, function () {
+            enemyfiretime2 = sprites.createProjectileFromSprite(img`
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . 2 2 . . . . . . . 
+                . . . . . . 4 5 5 4 . . . . . . 
+                . . . . . 2 5 5 5 5 2 . . . . . 
+                . . . . . 2 5 5 5 5 2 . . . . . 
+                . . . . . . 4 5 5 4 . . . . . . 
+                . . . . . . . 2 2 . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                `, enemyversion2, 20, 70)
+            enemyfiretime2.setKind(SpriteKind.Enemyshot)
+            enemyfiretime2.lifespan = 100000
+            enemyfiretime2 = sprites.createProjectileFromSprite(img`
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . 2 2 . . . . . . . 
+                . . . . . . 4 5 5 4 . . . . . . 
+                . . . . . 2 5 5 5 5 2 . . . . . 
+                . . . . . 2 5 5 5 5 2 . . . . . 
+                . . . . . . 4 5 5 4 . . . . . . 
+                . . . . . . . 2 2 . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                `, enemyversion2, -20, 70)
+            enemyfiretime2.setKind(SpriteKind.Enemyshot2)
+            enemyfiretime2.lifespan = 100000
+        })
+        enemyfiretime2.setFlag(SpriteFlag.AutoDestroy, true)
+    }
+    pause(3500)
 })
 forever(function () {
     if (enemyfiretime2 && enemyfiretime2.lifespan > 0) {
@@ -6546,10 +5598,679 @@ forever(function () {
                 `, enemyversion2, -150, 70)
             enemyfiretime2.setKind(SpriteKind.Enemyshot2)
             enemyfiretime2.lifespan = 100000
-            enemyfiretime2.setFlag(SpriteFlag.AutoDestroy, true)
         })
         pause(8000)
+        enemyfiretime2.setFlag(SpriteFlag.AutoDestroy, true)
     }
+})
+forever(function () {
+    if (Bossfiretime2 && Bossfiretime2.lifespan > 0) {
+        Bossfiretime2 = sprites.createProjectileFromSprite(img`
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            .......11.......
+            `, boss2, 0, 5000)
+        timer.after(1000, function () {
+            Bossfiretime2 = sprites.createProjectileFromSprite(img`
+                2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                `, boss2, 0, 100)
+            Bossfiretime2.setKind(SpriteKind.Boss2shot)
+            Bossfiretime2.lifespan = 95000
+            timer.after(100, function () {
+                Bossfiretime2 = sprites.createProjectileFromSprite(img`
+                    2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                    2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                    2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                    2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                    2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                    2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                    2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                    2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                    2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                    2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                    2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                    2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                    2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                    2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                    2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                    2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                    `, boss2, 0, 100)
+                Bossfiretime2.setKind(SpriteKind.Boss2shot)
+                Bossfiretime2.lifespan = 95000
+                timer.after(100, function () {
+                    Bossfiretime2 = sprites.createProjectileFromSprite(img`
+                        2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                        2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                        2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                        2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                        2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                        2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                        2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                        2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                        2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                        2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                        2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                        2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                        2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                        2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                        2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                        2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                        `, boss2, 0, 100)
+                    Bossfiretime2.setKind(SpriteKind.Boss2shot)
+                    Bossfiretime2.lifespan = 95000
+                    timer.after(100, function () {
+                        Bossfiretime2 = sprites.createProjectileFromSprite(img`
+                            2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                            2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                            2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                            2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                            2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                            2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                            2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                            2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                            2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                            2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                            2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                            2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                            2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                            2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                            2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                            2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                            `, boss2, 0, 100)
+                        Bossfiretime2.setKind(SpriteKind.Boss2shot)
+                        Bossfiretime2.lifespan = 95000
+                        timer.after(100, function () {
+                            Bossfiretime2 = sprites.createProjectileFromSprite(img`
+                                2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                                2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                                2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                                2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                                2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                                2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                                2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                                2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                                2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                                2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                                2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                                2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                                2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                                2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                                2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                                2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                                `, boss2, 0, 100)
+                            Bossfiretime2.setKind(SpriteKind.Boss2shot)
+                            Bossfiretime2.lifespan = 95000
+                            timer.after(100, function () {
+                                Bossfiretime2 = sprites.createProjectileFromSprite(img`
+                                    2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                                    2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                                    2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                                    2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                                    2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                                    2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                                    2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                                    2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                                    2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                                    2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                                    2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                                    2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                                    2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                                    2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                                    2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                                    2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                                    `, boss2, 0, 100)
+                                Bossfiretime2.setKind(SpriteKind.Boss2shot)
+                                Bossfiretime2.lifespan = 95000
+                                timer.after(100, function () {
+                                    Bossfiretime2 = sprites.createProjectileFromSprite(img`
+                                        2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                                        2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                                        2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                                        2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                                        2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                                        2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                                        2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                                        2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                                        2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                                        2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                                        2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                                        2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                                        2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                                        2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                                        2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                                        2 2 4 5 5 5 5 5 5 5 5 5 5 4 2 2 
+                                        `, boss2, 0, 200)
+                                    Bossfiretime2.setKind(SpriteKind.Boss2shot)
+                                    Bossfiretime2.lifespan = 95000
+                                })
+                            })
+                        })
+                    })
+                })
+            })
+        })
+        Bossfiretime2.setFlag(SpriteFlag.AutoDestroy, true)
+    }
+    pause(4000)
+})
+forever(function () {
+    if (Bossfiretime2 && Bossfiretime2.lifespan > 0) {
+        Bossfiretime2 = sprites.createProjectileFromSprite(img`
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . 4 4 . . . . . . . 
+            . . . . . . 4 5 5 4 . . . . . . 
+            . . . . . . 2 5 5 2 . . . . . . 
+            . . . . . . . 2 2 . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            `, boss2, 30, 65)
+        Bossfiretime2.setKind(SpriteKind.Boss2shot)
+        Bossfiretime2.lifespan = 95000
+        Bossfiretime2 = sprites.createProjectileFromSprite(img`
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . 4 4 . . . . . . . 
+            . . . . . . 4 5 5 4 . . . . . . 
+            . . . . . . 2 5 5 2 . . . . . . 
+            . . . . . . . 2 2 . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            `, boss2, -30, 65)
+        Bossfiretime2.setKind(SpriteKind.Boss2shot)
+        Bossfiretime2.lifespan = 95000
+        Bossfiretime2 = sprites.createProjectileFromSprite(img`
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . 4 4 . . . . . . . 
+            . . . . . . 4 5 5 4 . . . . . . 
+            . . . . . . 2 5 5 2 . . . . . . 
+            . . . . . . . 2 2 . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            `, boss2, 90, 65)
+        Bossfiretime2.setKind(SpriteKind.Boss2shot)
+        Bossfiretime2.lifespan = 95000
+        Bossfiretime2 = sprites.createProjectileFromSprite(img`
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . 4 4 . . . . . . . 
+            . . . . . . 4 5 5 4 . . . . . . 
+            . . . . . . 2 5 5 2 . . . . . . 
+            . . . . . . . 2 2 . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            `, boss2, -90, 65)
+        Bossfiretime2.setKind(SpriteKind.Boss2shot)
+        Bossfiretime2.lifespan = 95000
+        Bossfiretime2 = sprites.createProjectileFromSprite(img`
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . 4 4 . . . . . . . 
+            . . . . . . 4 5 5 4 . . . . . . 
+            . . . . . . 2 5 5 2 . . . . . . 
+            . . . . . . . 2 2 . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            `, boss2, 60, 65)
+        Bossfiretime2.setKind(SpriteKind.Boss2shot)
+        Bossfiretime2.lifespan = 95000
+        Bossfiretime2 = sprites.createProjectileFromSprite(img`
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . 4 4 . . . . . . . 
+            . . . . . . 4 5 5 4 . . . . . . 
+            . . . . . . 2 5 5 2 . . . . . . 
+            . . . . . . . 2 2 . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            `, boss2, -60, 65)
+        Bossfiretime2.setKind(SpriteKind.Boss2shot)
+        Bossfiretime2.lifespan = 95000
+    }
+    timer.after(100, function () {
+        if (Bossfiretime2 && Bossfiretime2.lifespan > 0) {
+            Bossfiretime2 = sprites.createProjectileFromSprite(img`
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . 4 4 . . . . . . . 
+                . . . . . . 4 5 5 4 . . . . . . 
+                . . . . . . 2 5 5 2 . . . . . . 
+                . . . . . . . 2 2 . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                `, boss2, 30, 65)
+            Bossfiretime2.setKind(SpriteKind.Boss2shot)
+            Bossfiretime2.lifespan = 95000
+            Bossfiretime2 = sprites.createProjectileFromSprite(img`
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . 4 4 . . . . . . . 
+                . . . . . . 4 5 5 4 . . . . . . 
+                . . . . . . 2 5 5 2 . . . . . . 
+                . . . . . . . 2 2 . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                `, boss2, -30, 65)
+            Bossfiretime2.setKind(SpriteKind.Boss2shot)
+            Bossfiretime2.lifespan = 95000
+            Bossfiretime2 = sprites.createProjectileFromSprite(img`
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . 4 4 . . . . . . . 
+                . . . . . . 4 5 5 4 . . . . . . 
+                . . . . . . 2 5 5 2 . . . . . . 
+                . . . . . . . 2 2 . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                `, boss2, 90, 65)
+            Bossfiretime2.setKind(SpriteKind.Boss2shot)
+            Bossfiretime2.lifespan = 95000
+            Bossfiretime2 = sprites.createProjectileFromSprite(img`
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . 4 4 . . . . . . . 
+                . . . . . . 4 5 5 4 . . . . . . 
+                . . . . . . 2 5 5 2 . . . . . . 
+                . . . . . . . 2 2 . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                `, boss2, -90, 65)
+            Bossfiretime2.setKind(SpriteKind.Boss2shot)
+            Bossfiretime2.lifespan = 95000
+            Bossfiretime2 = sprites.createProjectileFromSprite(img`
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . 4 4 . . . . . . . 
+                . . . . . . 4 5 5 4 . . . . . . 
+                . . . . . . 2 5 5 2 . . . . . . 
+                . . . . . . . 2 2 . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                `, boss2, 60, 65)
+            Bossfiretime2.setKind(SpriteKind.Boss2shot)
+            Bossfiretime2.lifespan = 95000
+            Bossfiretime2 = sprites.createProjectileFromSprite(img`
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . 4 4 . . . . . . . 
+                . . . . . . 4 5 5 4 . . . . . . 
+                . . . . . . 2 5 5 2 . . . . . . 
+                . . . . . . . 2 2 . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                `, boss2, -60, 65)
+            Bossfiretime2.setKind(SpriteKind.Boss2shot)
+            Bossfiretime2.lifespan = 95000
+        }
+        timer.after(100, function () {
+            if (Bossfiretime2 && Bossfiretime2.lifespan > 0) {
+                Bossfiretime2 = sprites.createProjectileFromSprite(img`
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . 4 4 . . . . . . . 
+                    . . . . . . 4 5 5 4 . . . . . . 
+                    . . . . . . 2 5 5 2 . . . . . . 
+                    . . . . . . . 2 2 . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    `, boss2, 30, 65)
+                Bossfiretime2.setKind(SpriteKind.Boss2shot)
+                Bossfiretime2.lifespan = 95000
+                Bossfiretime2 = sprites.createProjectileFromSprite(img`
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . 4 4 . . . . . . . 
+                    . . . . . . 4 5 5 4 . . . . . . 
+                    . . . . . . 2 5 5 2 . . . . . . 
+                    . . . . . . . 2 2 . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    `, boss2, -30, 65)
+                Bossfiretime2.setKind(SpriteKind.Boss2shot)
+                Bossfiretime2.lifespan = 95000
+                Bossfiretime2 = sprites.createProjectileFromSprite(img`
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . 4 4 . . . . . . . 
+                    . . . . . . 4 5 5 4 . . . . . . 
+                    . . . . . . 2 5 5 2 . . . . . . 
+                    . . . . . . . 2 2 . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    `, boss2, 90, 65)
+                Bossfiretime2.setKind(SpriteKind.Boss2shot)
+                Bossfiretime2.lifespan = 95000
+                Bossfiretime2 = sprites.createProjectileFromSprite(img`
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . 4 4 . . . . . . . 
+                    . . . . . . 4 5 5 4 . . . . . . 
+                    . . . . . . 2 5 5 2 . . . . . . 
+                    . . . . . . . 2 2 . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    `, boss2, -90, 65)
+                Bossfiretime2.setKind(SpriteKind.Boss2shot)
+                Bossfiretime2.lifespan = 95000
+                Bossfiretime2 = sprites.createProjectileFromSprite(img`
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . 4 4 . . . . . . . 
+                    . . . . . . 4 5 5 4 . . . . . . 
+                    . . . . . . 2 5 5 2 . . . . . . 
+                    . . . . . . . 2 2 . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    `, boss2, 60, 65)
+                Bossfiretime2.setKind(SpriteKind.Boss2shot)
+                Bossfiretime2.lifespan = 95000
+                Bossfiretime2 = sprites.createProjectileFromSprite(img`
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . 4 4 . . . . . . . 
+                    . . . . . . 4 5 5 4 . . . . . . 
+                    . . . . . . 2 5 5 2 . . . . . . 
+                    . . . . . . . 2 2 . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    `, boss2, -60, 65)
+                Bossfiretime2.setKind(SpriteKind.Boss2shot)
+                Bossfiretime2.lifespan = 95000
+                Bossfiretime2.setFlag(SpriteFlag.AutoDestroy, true)
+            }
+        })
+    })
+    pause(1500)
+})
+forever(function () {
+    if (bossfiretime && bossfiretime.lifespan > 0) {
+        Enemy_1.destroy()
+        minion.destroy()
+        enemyversion2.destroy()
+        _1shotenemyfire.destroy()
+        if (enemyfiretime && enemyfiretime.lifespan > 0) {
+            enemyfiretime2.lifespan = 0
+            enemyfiretime.lifespan = 0
+        }
+        if (enemyfiretime2 && enemyfiretime2.lifespan > 0) {
+            enemyfiretime2.lifespan = 0
+            enemyfiretime.lifespan = 0
+        }
+    }
+    if (Bossfiretime2 && Bossfiretime2.lifespan > 0) {
+        Enemy_1.destroy()
+        minion.destroy()
+        enemyversion2.destroy()
+        _1shotenemyfire.destroy()
+        if (enemyfiretime && enemyfiretime.lifespan > 0) {
+            enemyfiretime2.lifespan = 0
+            enemyfiretime.lifespan = 0
+        }
+        if (enemyfiretime2 && enemyfiretime2.lifespan > 0) {
+            enemyfiretime2.lifespan = 0
+            enemyfiretime.lifespan = 0
+        }
+    }
+})
+forever(function () {
+	
 })
 forever(function () {
     if (Sprite1_Projectile && Sprite1_Projectile.lifespan > 0) {
@@ -6630,318 +6351,6 @@ forever(function () {
             }
         }
     }
-})
-forever(function () {
-    timer.after(5000, function () {
-        if (bossfiretime && bossfiretime.lifespan > 0) {
-            bossfiretime = sprites.createProjectileFromSprite(img`
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . 2 2 . . . . . . . . 2 2 . . 
-                . 4 5 5 4 . . . . . . 4 5 5 4 . 
-                2 5 5 5 5 2 . . . . 2 5 5 5 5 2 
-                2 5 5 5 5 2 . . . . 2 5 5 5 5 2 
-                . 4 5 5 4 . . . . . . 4 5 5 4 . 
-                . . 2 2 . . . . . . . . 2 2 . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                `, boss1, 0, 100)
-            bossfiretime.setKind(SpriteKind.Bossshot)
-            bossfiretime.lifespan = 95000
-            timer.after(100, function () {
-                bossfiretime = sprites.createProjectileFromSprite(img`
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . 2 2 . . . . . . . . 2 2 . . 
-                    . 4 5 5 4 . . . . . . 4 5 5 4 . 
-                    2 5 5 5 5 2 . . . . 2 5 5 5 5 2 
-                    2 5 5 5 5 2 . . . . 2 5 5 5 5 2 
-                    . 4 5 5 4 . . . . . . 4 5 5 4 . 
-                    . . 2 2 . . . . . . . . 2 2 . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    `, boss1, 0, 100)
-                bossfiretime.setKind(SpriteKind.Bossshot)
-                bossfiretime.lifespan = 95000
-                timer.after(100, function () {
-                    bossfiretime = sprites.createProjectileFromSprite(img`
-                        . . . . . . . . . . . . . . . . 
-                        . . . . . . . . . . . . . . . . 
-                        . . . . . . . . . . . . . . . . 
-                        . . . . . . . . . . . . . . . . 
-                        . . . . . . . . . . . . . . . . 
-                        . . 2 2 . . . . . . . . 2 2 . . 
-                        . 4 5 5 4 . . . . . . 4 5 5 4 . 
-                        2 5 5 5 5 2 . . . . 2 5 5 5 5 2 
-                        2 5 5 5 5 2 . . . . 2 5 5 5 5 2 
-                        . 4 5 5 4 . . . . . . 4 5 5 4 . 
-                        . . 2 2 . . . . . . . . 2 2 . . 
-                        . . . . . . . . . . . . . . . . 
-                        . . . . . . . . . . . . . . . . 
-                        . . . . . . . . . . . . . . . . 
-                        . . . . . . . . . . . . . . . . 
-                        . . . . . . . . . . . . . . . . 
-                        `, boss1, 0, 100)
-                    bossfiretime.setKind(SpriteKind.Bossshot)
-                    bossfiretime.lifespan = 95000
-                })
-            })
-        }
-    })
-    if (bossfiretime && bossfiretime.lifespan > 0) {
-        bossfiretime = sprites.createProjectileFromSprite(img`
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . 4 4 . . . . . . . 
-            . . . . . . 4 5 5 4 . . . . . . 
-            . . . . . . 2 5 5 2 . . . . . . 
-            . . . . . . . 2 2 . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            `, boss1, 20, 60)
-        bossfiretime.setKind(SpriteKind.Bossshot)
-        bossfiretime = sprites.createProjectileFromSprite(img`
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . 4 4 . . . . . . . 
-            . . . . . . 4 5 5 4 . . . . . . 
-            . . . . . . 2 5 5 2 . . . . . . 
-            . . . . . . . 2 2 . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            `, boss1, -20, 60)
-        bossfiretime.setKind(SpriteKind.Bossshot)
-        bossfiretime.lifespan = 75000
-        timer.after(100, function () {
-            if (bossfiretime && bossfiretime.lifespan > 0) {
-                bossfiretime = sprites.createProjectileFromSprite(img`
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . 4 4 . . . . . . . 
-                    . . . . . . 4 5 5 4 . . . . . . 
-                    . . . . . . 2 5 5 2 . . . . . . 
-                    . . . . . . . 2 2 . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    `, boss1, 20, 60)
-                bossfiretime.setKind(SpriteKind.Bossshot)
-                bossfiretime = sprites.createProjectileFromSprite(img`
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . 4 4 . . . . . . . 
-                    . . . . . . 4 5 5 4 . . . . . . 
-                    . . . . . . 2 5 5 2 . . . . . . 
-                    . . . . . . . 2 2 . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    . . . . . . . . . . . . . . . . 
-                    `, boss1, -20, 60)
-                bossfiretime.setKind(SpriteKind.Bossshot)
-                bossfiretime.lifespan = 75000
-            }
-            timer.after(100, function () {
-                if (bossfiretime && bossfiretime.lifespan > 0) {
-                    bossfiretime = sprites.createProjectileFromSprite(img`
-                        . . . . . . . . . . . . . . . . 
-                        . . . . . . . . . . . . . . . . 
-                        . . . . . . . . . . . . . . . . 
-                        . . . . . . . . . . . . . . . . 
-                        . . . . . . . . . . . . . . . . 
-                        . . . . . . . . . . . . . . . . 
-                        . . . . . . . 4 4 . . . . . . . 
-                        . . . . . . 4 5 5 4 . . . . . . 
-                        . . . . . . 2 5 5 2 . . . . . . 
-                        . . . . . . . 2 2 . . . . . . . 
-                        . . . . . . . . . . . . . . . . 
-                        . . . . . . . . . . . . . . . . 
-                        . . . . . . . . . . . . . . . . 
-                        . . . . . . . . . . . . . . . . 
-                        . . . . . . . . . . . . . . . . 
-                        . . . . . . . . . . . . . . . . 
-                        `, boss1, 20, 60)
-                    bossfiretime.setKind(SpriteKind.Bossshot)
-                    bossfiretime = sprites.createProjectileFromSprite(img`
-                        . . . . . . . . . . . . . . . . 
-                        . . . . . . . . . . . . . . . . 
-                        . . . . . . . . . . . . . . . . 
-                        . . . . . . . . . . . . . . . . 
-                        . . . . . . . . . . . . . . . . 
-                        . . . . . . . . . . . . . . . . 
-                        . . . . . . . 4 4 . . . . . . . 
-                        . . . . . . 4 5 5 4 . . . . . . 
-                        . . . . . . 2 5 5 2 . . . . . . 
-                        . . . . . . . 2 2 . . . . . . . 
-                        . . . . . . . . . . . . . . . . 
-                        . . . . . . . . . . . . . . . . 
-                        . . . . . . . . . . . . . . . . 
-                        . . . . . . . . . . . . . . . . 
-                        . . . . . . . . . . . . . . . . 
-                        . . . . . . . . . . . . . . . . 
-                        `, boss1, -20, 60)
-                    bossfiretime.setKind(SpriteKind.Bossshot)
-                    bossfiretime.lifespan = 75000
-                }
-                timer.after(100, function () {
-                    if (bossfiretime && bossfiretime.lifespan > 0) {
-                        bossfiretime = sprites.createProjectileFromSprite(img`
-                            . . . . . . . . . . . . . . . . 
-                            . . . . . . . . . . . . . . . . 
-                            . . . . . . . . . . . . . . . . 
-                            . . . . . . . . . . . . . . . . 
-                            . . . . . . . . . . . . . . . . 
-                            . . . . . . . . . . . . . . . . 
-                            . . . . . . . 4 4 . . . . . . . 
-                            . . . . . . 4 5 5 4 . . . . . . 
-                            . . . . . . 2 5 5 2 . . . . . . 
-                            . . . . . . . 2 2 . . . . . . . 
-                            . . . . . . . . . . . . . . . . 
-                            . . . . . . . . . . . . . . . . 
-                            . . . . . . . . . . . . . . . . 
-                            . . . . . . . . . . . . . . . . 
-                            . . . . . . . . . . . . . . . . 
-                            . . . . . . . . . . . . . . . . 
-                            `, boss1, 20, 60)
-                        bossfiretime.setKind(SpriteKind.Bossshot)
-                        bossfiretime = sprites.createProjectileFromSprite(img`
-                            . . . . . . . . . . . . . . . . 
-                            . . . . . . . . . . . . . . . . 
-                            . . . . . . . . . . . . . . . . 
-                            . . . . . . . . . . . . . . . . 
-                            . . . . . . . . . . . . . . . . 
-                            . . . . . . . . . . . . . . . . 
-                            . . . . . . . 4 4 . . . . . . . 
-                            . . . . . . 4 5 5 4 . . . . . . 
-                            . . . . . . 2 5 5 2 . . . . . . 
-                            . . . . . . . 2 2 . . . . . . . 
-                            . . . . . . . . . . . . . . . . 
-                            . . . . . . . . . . . . . . . . 
-                            . . . . . . . . . . . . . . . . 
-                            . . . . . . . . . . . . . . . . 
-                            . . . . . . . . . . . . . . . . 
-                            . . . . . . . . . . . . . . . . 
-                            `, boss1, -20, 60)
-                        bossfiretime.setKind(SpriteKind.Bossshot)
-                        bossfiretime.lifespan = 75000
-                    }
-                })
-            })
-        })
-    }
-    pause(3000)
-})
-forever(function () {
-    if (inCharacterSelectionMenu) {
-        pause(66000)
-    }
-    timer.after(randint(2000, 3000), function () {
-        enemyversion2 = sprites.create(img`
-            ........6....6........
-            .......66699666.......
-            ......6667557666......
-            .....967677776769.....
-            .....667677776766.....
-            ....66176777767166....
-            ...6671761771671766...
-            ...7777161111617777...
-            ...6557766116677556...
-            ...6655776666775566...
-            ....665566..665566....
-            .....66556..65566.....
-            ......6656..6566......
-            .......666..666.......
-            ........66..66........
-            ......................
-            ......................
-            `, SpriteKind.Enemy2)
-        characterAnimations.loopFrames(
-        enemyversion2,
-        assets.animation`myAnim6`,
-        200,
-        characterAnimations.rule(Predicate.Moving)
-        )
-        enemyversion2.y = 0
-        enemyversion2.vy = 2 + enemySpeed
-        enemyversion2.x = randint(0, scene.screenWidth())
-        bigstatusbar2 = statusbars.create(18, 1, StatusBarKind.bigenemyhealth2)
-        bigstatusbar2.attachToSprite(enemyversion2, -1, 0)
-        enemyfiretime2 = sprites.create(img`
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            `, SpriteKind.enemy2firetimer)
-        enemyfiretime2.lifespan = 100000
-        story.spriteMoveToLocation(enemyversion2, 80, randint(12, 20), 20)
-        enemyversion2.setBounceOnWall(true)
-        timer.after(500, function () {
-            story.cancelSpriteMovement(enemyversion2)
-            enemyversion2.setVelocity(8, 0)
-        })
-        timer.after(0, function () {
-            timer.after(30000, function () {
-                enemyversion2.setVelocity(0, 0)
-                enemyversion2.vy = 3 + enemySpeed
-                enemyversion2.setBounceOnWall(false)
-                enemyfiretime.lifespan = 0
-            })
-        })
-    })
-    pause(Enemy2spawntime)
 })
 forever(function () {
     if (enemyfiretime && enemyfiretime.lifespan > 0) {
@@ -7217,6 +6626,288 @@ forever(function () {
                 })
             }
         })
+        enemyfiretime.setFlag(SpriteFlag.AutoDestroy, true)
     }
     pause(2500)
+})
+forever(function () {
+    timer.after(5000, function () {
+        if (bossfiretime && bossfiretime.lifespan > 0) {
+            bossfiretime = sprites.createProjectileFromSprite(img`
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . 2 2 . . . . . . . . 2 2 . . 
+                . 4 5 5 4 . . . . . . 4 5 5 4 . 
+                2 5 5 5 5 2 . . . . 2 5 5 5 5 2 
+                2 5 5 5 5 2 . . . . 2 5 5 5 5 2 
+                . 4 5 5 4 . . . . . . 4 5 5 4 . 
+                . . 2 2 . . . . . . . . 2 2 . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                `, boss1, 0, 100)
+            bossfiretime.setKind(SpriteKind.Bossshot)
+            bossfiretime.lifespan = 95000
+            timer.after(100, function () {
+                bossfiretime = sprites.createProjectileFromSprite(img`
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . 2 2 . . . . . . . . 2 2 . . 
+                    . 4 5 5 4 . . . . . . 4 5 5 4 . 
+                    2 5 5 5 5 2 . . . . 2 5 5 5 5 2 
+                    2 5 5 5 5 2 . . . . 2 5 5 5 5 2 
+                    . 4 5 5 4 . . . . . . 4 5 5 4 . 
+                    . . 2 2 . . . . . . . . 2 2 . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    `, boss1, 0, 100)
+                bossfiretime.setKind(SpriteKind.Bossshot)
+                bossfiretime.lifespan = 95000
+                timer.after(100, function () {
+                    bossfiretime = sprites.createProjectileFromSprite(img`
+                        . . . . . . . . . . . . . . . . 
+                        . . . . . . . . . . . . . . . . 
+                        . . . . . . . . . . . . . . . . 
+                        . . . . . . . . . . . . . . . . 
+                        . . . . . . . . . . . . . . . . 
+                        . . 2 2 . . . . . . . . 2 2 . . 
+                        . 4 5 5 4 . . . . . . 4 5 5 4 . 
+                        2 5 5 5 5 2 . . . . 2 5 5 5 5 2 
+                        2 5 5 5 5 2 . . . . 2 5 5 5 5 2 
+                        . 4 5 5 4 . . . . . . 4 5 5 4 . 
+                        . . 2 2 . . . . . . . . 2 2 . . 
+                        . . . . . . . . . . . . . . . . 
+                        . . . . . . . . . . . . . . . . 
+                        . . . . . . . . . . . . . . . . 
+                        . . . . . . . . . . . . . . . . 
+                        . . . . . . . . . . . . . . . . 
+                        `, boss1, 0, 100)
+                    bossfiretime.setKind(SpriteKind.Bossshot)
+                    bossfiretime.lifespan = 95000
+                })
+            })
+        }
+    })
+    if (bossfiretime && bossfiretime.lifespan > 0) {
+        bossfiretime = sprites.createProjectileFromSprite(img`
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . 4 4 . . . . . . . 
+            . . . . . . 4 5 5 4 . . . . . . 
+            . . . . . . 2 5 5 2 . . . . . . 
+            . . . . . . . 2 2 . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            `, boss1, 20, 60)
+        bossfiretime.setKind(SpriteKind.Bossshot)
+        bossfiretime = sprites.createProjectileFromSprite(img`
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . 4 4 . . . . . . . 
+            . . . . . . 4 5 5 4 . . . . . . 
+            . . . . . . 2 5 5 2 . . . . . . 
+            . . . . . . . 2 2 . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            `, boss1, -20, 60)
+        bossfiretime.setKind(SpriteKind.Bossshot)
+        bossfiretime.lifespan = 75000
+        timer.after(100, function () {
+            if (bossfiretime && bossfiretime.lifespan > 0) {
+                bossfiretime = sprites.createProjectileFromSprite(img`
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . 4 4 . . . . . . . 
+                    . . . . . . 4 5 5 4 . . . . . . 
+                    . . . . . . 2 5 5 2 . . . . . . 
+                    . . . . . . . 2 2 . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    `, boss1, 20, 60)
+                bossfiretime.setKind(SpriteKind.Bossshot)
+                bossfiretime = sprites.createProjectileFromSprite(img`
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . 4 4 . . . . . . . 
+                    . . . . . . 4 5 5 4 . . . . . . 
+                    . . . . . . 2 5 5 2 . . . . . . 
+                    . . . . . . . 2 2 . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    . . . . . . . . . . . . . . . . 
+                    `, boss1, -20, 60)
+                bossfiretime.setKind(SpriteKind.Bossshot)
+                bossfiretime.lifespan = 75000
+            }
+            timer.after(100, function () {
+                if (bossfiretime && bossfiretime.lifespan > 0) {
+                    bossfiretime = sprites.createProjectileFromSprite(img`
+                        . . . . . . . . . . . . . . . . 
+                        . . . . . . . . . . . . . . . . 
+                        . . . . . . . . . . . . . . . . 
+                        . . . . . . . . . . . . . . . . 
+                        . . . . . . . . . . . . . . . . 
+                        . . . . . . . . . . . . . . . . 
+                        . . . . . . . 4 4 . . . . . . . 
+                        . . . . . . 4 5 5 4 . . . . . . 
+                        . . . . . . 2 5 5 2 . . . . . . 
+                        . . . . . . . 2 2 . . . . . . . 
+                        . . . . . . . . . . . . . . . . 
+                        . . . . . . . . . . . . . . . . 
+                        . . . . . . . . . . . . . . . . 
+                        . . . . . . . . . . . . . . . . 
+                        . . . . . . . . . . . . . . . . 
+                        . . . . . . . . . . . . . . . . 
+                        `, boss1, 20, 60)
+                    bossfiretime.setKind(SpriteKind.Bossshot)
+                    bossfiretime = sprites.createProjectileFromSprite(img`
+                        . . . . . . . . . . . . . . . . 
+                        . . . . . . . . . . . . . . . . 
+                        . . . . . . . . . . . . . . . . 
+                        . . . . . . . . . . . . . . . . 
+                        . . . . . . . . . . . . . . . . 
+                        . . . . . . . . . . . . . . . . 
+                        . . . . . . . 4 4 . . . . . . . 
+                        . . . . . . 4 5 5 4 . . . . . . 
+                        . . . . . . 2 5 5 2 . . . . . . 
+                        . . . . . . . 2 2 . . . . . . . 
+                        . . . . . . . . . . . . . . . . 
+                        . . . . . . . . . . . . . . . . 
+                        . . . . . . . . . . . . . . . . 
+                        . . . . . . . . . . . . . . . . 
+                        . . . . . . . . . . . . . . . . 
+                        . . . . . . . . . . . . . . . . 
+                        `, boss1, -20, 60)
+                    bossfiretime.setKind(SpriteKind.Bossshot)
+                    bossfiretime.lifespan = 75000
+                }
+                timer.after(100, function () {
+                    if (bossfiretime && bossfiretime.lifespan > 0) {
+                        bossfiretime = sprites.createProjectileFromSprite(img`
+                            . . . . . . . . . . . . . . . . 
+                            . . . . . . . . . . . . . . . . 
+                            . . . . . . . . . . . . . . . . 
+                            . . . . . . . . . . . . . . . . 
+                            . . . . . . . . . . . . . . . . 
+                            . . . . . . . . . . . . . . . . 
+                            . . . . . . . 4 4 . . . . . . . 
+                            . . . . . . 4 5 5 4 . . . . . . 
+                            . . . . . . 2 5 5 2 . . . . . . 
+                            . . . . . . . 2 2 . . . . . . . 
+                            . . . . . . . . . . . . . . . . 
+                            . . . . . . . . . . . . . . . . 
+                            . . . . . . . . . . . . . . . . 
+                            . . . . . . . . . . . . . . . . 
+                            . . . . . . . . . . . . . . . . 
+                            . . . . . . . . . . . . . . . . 
+                            `, boss1, 20, 60)
+                        bossfiretime.setKind(SpriteKind.Bossshot)
+                        bossfiretime = sprites.createProjectileFromSprite(img`
+                            . . . . . . . . . . . . . . . . 
+                            . . . . . . . . . . . . . . . . 
+                            . . . . . . . . . . . . . . . . 
+                            . . . . . . . . . . . . . . . . 
+                            . . . . . . . . . . . . . . . . 
+                            . . . . . . . . . . . . . . . . 
+                            . . . . . . . 4 4 . . . . . . . 
+                            . . . . . . 4 5 5 4 . . . . . . 
+                            . . . . . . 2 5 5 2 . . . . . . 
+                            . . . . . . . 2 2 . . . . . . . 
+                            . . . . . . . . . . . . . . . . 
+                            . . . . . . . . . . . . . . . . 
+                            . . . . . . . . . . . . . . . . 
+                            . . . . . . . . . . . . . . . . 
+                            . . . . . . . . . . . . . . . . 
+                            . . . . . . . . . . . . . . . . 
+                            `, boss1, -20, 60)
+                        bossfiretime.setKind(SpriteKind.Bossshot)
+                        bossfiretime.lifespan = 75000
+                    }
+                })
+            })
+        })
+    }
+    pause(3000)
+})
+game.onUpdate(function () {
+    if (!(inCharacterSelectionMenu)) {
+        movinf = controller.left.isPressed() || (controller.right.isPressed() || (controller.up.isPressed() || (controller.A.isPressed() || (controller.A.isPressed() || controller.down.isPressed()))))
+    } else {
+        selectcharindicator.setPosition(currentlyselectedsprite.x, currentlyselectedsprite.y - 15)
+    }
+})
+game.onUpdateInterval(0.0000000000000000000000000000000000000001, function () {
+    if (does_miniship_exist == true) {
+        projectile = sprites.createProjectileFromSprite(img`
+            7 
+            `, Miniship, 0, 0)
+        choose = randint(1, 6)
+        projectile.setFlag(SpriteFlag.AutoDestroy, true)
+        if (choose == 1) {
+            projectile.follow(minion)
+        } else if (choose == 2) {
+            projectile.follow(minion2)
+        } else if (choose == 3) {
+            projectile.follow(boss1)
+        } else if (choose == 4) {
+            projectile.follow(boss2)
+        } else if (choose == 5) {
+            projectile.follow(Enemy_1)
+        } else {
+            projectile.follow(enemyversion2)
+        }
+        projectile.lifespan = 2000
+    }
+})
+game.onUpdateInterval(12000, function () {
+    enemySpeed += 8
+    enemySpeed = Math.min(enemySpeed, 60)
+    EnemySpawnTime += -500
+    Enemy2spawntime += -500
+    Minionspawn += -850
+    EnemySpawnTime = Math.max(EnemySpawnTime, 5000)
+    EnemySpawnTime = Math.max(Enemy2spawntime, 5000)
+    Minionspawn = Math.max(Minionspawn, 1500)
 })
